@@ -1,12 +1,12 @@
 // Runs the whole free pipeline on pasted text:
 // find skills (matcher) -> check the quotes (verify) -> count and rank (score).
 //
-// The Claude extractor in milestone 4 will replace only the first step. The
-// verify and score steps stay exactly the same for both.
+// The Claude pipeline in claude.ts replaces only the first step. The verify
+// and score steps are exactly the same for both.
 
 import { findMentions } from '../domain/matcher.ts'
 import { buildAnalysis } from '../domain/score.ts'
-import type { Analysis, Taxonomy } from '../domain/types.ts'
+import type { Analysis, Posting, Taxonomy } from '../domain/types.ts'
 import { verifyMentions } from '../domain/verify.ts'
 
 export type TextInputs = {
@@ -28,6 +28,20 @@ export function titleFor(text: string, index: number): string {
   return first
 }
 
+export type PreparedInputs = { postings: { posting: Posting; text: string }[]; resume: string }
+
+/** Applies the size limits, drops blank postings and names the rest. Shared by both pipelines. */
+export function prepare(inputs: TextInputs): PreparedInputs {
+  return {
+    postings: inputs.postings
+      .map((text) => text.slice(0, MAX_CHARS))
+      .filter((text) => text.trim() !== '')
+      .slice(0, MAX_POSTINGS)
+      .map((text, index) => ({ posting: { id: `p${index + 1}`, title: titleFor(text, index) }, text })),
+    resume: inputs.resume.slice(0, MAX_CHARS),
+  }
+}
+
 export function analyseWithDictionary(inputs: TextInputs, tax: Taxonomy): Analysis {
   let rejected = 0
   const check = (text: string) => {
@@ -35,22 +49,14 @@ export function analyseWithDictionary(inputs: TextInputs, tax: Taxonomy): Analys
     rejected += result.rejected.length
     return result.kept
   }
-
-  const postings = inputs.postings
-    .map((text) => text.slice(0, MAX_CHARS))
-    .filter((text) => text.trim() !== '')
-    .slice(0, MAX_POSTINGS)
-    .map((text, index) => ({
-      posting: { id: `p${index + 1}`, title: titleFor(text, index) },
-      mentions: check(text),
-    }))
-
+  const prepared = prepare(inputs)
   return buildAnalysis(
     {
       label: inputs.label,
       fictional: inputs.fictional,
-      postings,
-      resume: check(inputs.resume.slice(0, MAX_CHARS)),
+      method: 'dictionary',
+      postings: prepared.postings.map(({ posting, text }) => ({ posting, mentions: check(text) })),
+      resume: check(prepared.resume),
       rejectedMentions: rejected,
     },
     tax,

@@ -24,6 +24,9 @@ export type AnalysisInput = {
   postings: { posting: Posting; mentions: Mention[] }[]
   resume: Mention[]
   rejectedMentions?: number
+  method?: 'dictionary' | 'claude'
+  otherSkills?: string[]
+  notes?: string[]
 }
 
 const MAX_RESUME_QUOTES = 3
@@ -98,5 +101,8 @@ export function buildAnalysis(input: AnalysisInput, tax: Taxonomy): Analysis {
     learningOrder: ranking.order,
     unlocks: Object.fromEntries([...ranking.unlocks].filter(([, list]) => list.length > 0)),
     rejectedMentions: input.rejectedMentions ?? 0,
+    method: input.method ?? 'dictionary',
+    otherSkills: input.otherSkills ?? [],
+    notes: input.notes ?? [],
   }
 }

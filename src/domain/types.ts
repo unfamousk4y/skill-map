@@ -72,4 +72,10 @@ export type Analysis = {
   unlocks: Record<string, string[]>
   /** Mentions thrown away because their quote was not found word for word in the text. */
   rejectedMentions: number
+  /** Which extractor read the documents. */
+  method: 'dictionary' | 'claude'
+  /** Skills the documents name that are not in our list. Only the Claude extractor reports these. */
+  otherSkills: string[]
+  /** Things the person should know about how this result was produced, such as a document that fell back to the free matcher. */
+  notes: string[]
 }

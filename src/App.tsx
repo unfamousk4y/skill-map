@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { sampleLabel, samplePostings, sampleResume } from './data/sampleTexts.ts'
 import { taxonomy } from './domain/taxonomy.ts'
+import type { Analysis } from './domain/types.ts'
+import { analyseWithClaude, ClaudeUnavailable, type Progress } from './extract/claude.ts'
 import { analyseWithDictionary } from './extract/dictionary.ts'
 import { BenchScreen } from './features/BenchScreen.tsx'
-import { IntakeScreen, type Draft } from './features/IntakeScreen.tsx'
+import { IntakeScreen, type Draft, type Method } from './features/IntakeScreen.tsx'
 import { ListView } from './features/ListView.tsx'
 import { SkillPanel } from './features/SkillPanel.tsx'
 import { MapCanvas } from './map/MapCanvas.tsx'
@@ -16,25 +18,37 @@ export function App() {
   return new URLSearchParams(window.location.search).has('bench') ? <BenchScreen /> : <SkillMapApp />
 }
 
+/**
+ * Asks our own server whether Claude mode is set up. On the public site there
+ * is no server, the request gets a web page back instead of JSON, and the
+ * answer is simply "no".
+ */
+async function claudeIsAvailable(): Promise<boolean> {
+  try {
+    const status = (await (await fetch('/api/status')).json()) as { claude?: unknown }
+    return status.claude === true
+  } catch {
+    return false
+  }
+}
+
 function SkillMapApp() {
   // null means "showing the built-in fictional sample".
-  const [own, setOwn] = useState<Draft | null>(null)
+  const [own, setOwn] = useState<{ draft: Draft; analysis: Analysis; build: number } | null>(null)
   const [editing, setEditing] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [view, setView] = useState<'map' | 'list'>('map')
+  const [claudeAvailable, setClaudeAvailable] = useState(false)
+  /** Set while Claude is reading documents. */
+  const [progress, setProgress] = useState<Progress | null>(null)
+  const [buildError, setBuildError] = useState<string | null>(null)
 
-  // The whole analysis is recomputed from the text. It takes a few
-  // milliseconds, so there is no need to store the result anywhere.
-  const analysis = useMemo(
-    () =>
-      analyseWithDictionary(
-        own
-          ? { label: 'Your postings and resume', fictional: false, ...own }
-          : { label: sampleLabel, fictional: true, ...sample },
-        taxonomy,
-      ),
-    [own],
+  // The sample is plain text run through the free matcher. It takes a few milliseconds.
+  const sampleAnalysis = useMemo(
+    () => analyseWithDictionary({ label: sampleLabel, fictional: true, ...sample }, taxonomy),
+    [],
   )
+  const analysis = own?.analysis ?? sampleAnalysis
   const scene = useMemo(() => buildScene(analysis, taxonomy), [analysis])
 
   // Escape closes the detail view from anywhere on the page.
@@ -46,13 +60,43 @@ function SkillMapApp() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  const openEditor = useCallback(() => {
+    setEditing(true)
+    setBuildError(null)
+    // Checked each time the form opens, so adding an API key needs no reload.
+    void claudeIsAvailable().then(setClaudeAvailable)
+  }, [])
+
   const asked = scene.nodes.filter((n) => n.demand > 0)
   const covered = asked.filter((n) => n.have).length
 
-  const build = (draft: Draft) => {
-    setOwn(draft)
-    setSelectedId(null)
-    setEditing(false)
+  const build = async (draft: Draft, method: Method) => {
+    const inputs = { label: 'Your postings and resume', fictional: false, ...draft }
+    const show = (result: Analysis) => {
+      setOwn((previous) => ({ draft, analysis: result, build: (previous?.build ?? 0) + 1 }))
+      setSelectedId(null)
+      setEditing(false)
+    }
+    setBuildError(null)
+
+    if (method === 'dictionary') {
+      show(analyseWithDictionary(inputs, taxonomy))
+      return
+    }
+
+    setProgress({ done: 0, total: 0, current: '' })
+    try {
+      show(await analyseWithClaude(inputs, taxonomy, undefined, setProgress))
+    } catch (error) {
+      // The form stays open with the person's text untouched, so nothing is lost.
+      setBuildError(
+        error instanceof ClaudeUnavailable
+          ? `${error.message} Your text is still here: you can build with the free matcher instead.`
+          : 'Something went wrong while building the map. Your text is still here, so you can try again.',
+      )
+    } finally {
+      setProgress(null)
+    }
   }
 
   const showSample = () => {
@@ -65,7 +109,10 @@ function SkillMapApp() {
       <header className="top">
         <div className="top__title">
           <h1>Skill Map</h1>
-          <p>{analysis.label}</p>
+          <p>
+            {analysis.label}
+            {analysis.method === 'claude' && ' · read by Claude'}
+          </p>
         </div>
         {!editing && (
           <>
@@ -97,7 +144,7 @@ function SkillMapApp() {
                   Show the sample
                 </button>
               )}
-              <button type="button" className="primary" onClick={() => setEditing(true)}>
+              <button type="button" className="primary" onClick={openEditor}>
                 {own ? 'Edit my text' : 'Use my own postings'}
               </button>
             </div>
@@ -108,7 +155,10 @@ function SkillMapApp() {
       {editing ? (
         <main className="stage stage--single">
           <IntakeScreen
-            initial={own ?? { postings: [''], resume: '' }}
+            initial={own?.draft ?? { postings: [''], resume: '' }}
+            claudeAvailable={claudeAvailable}
+            progress={progress}
+            serverError={buildError}
             onBuild={build}
             onCancel={() => setEditing(false)}
           />
@@ -117,7 +167,12 @@ function SkillMapApp() {
         <main className="stage">
           {view === 'map' ? (
             // The key makes a new map, with its opening animation, for each new analysis.
-            <MapCanvas key={own ? 'own' : 'sample'} scene={scene} selectedId={selectedId} onSelect={setSelectedId} />
+            <MapCanvas
+              key={own ? `own-${own.build}` : 'sample'}
+              scene={scene}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+            />
           ) : (
             <ListView analysis={analysis} taxonomy={taxonomy} selectedId={selectedId} onSelect={setSelectedId} />
           )}
@@ -127,7 +182,7 @@ function SkillMapApp() {
             taxonomy={taxonomy}
             selectedId={selectedId}
             onSelect={setSelectedId}
-            onEdit={() => setEditing(true)}
+            onEdit={openEditor}
           />
         </main>
       )}

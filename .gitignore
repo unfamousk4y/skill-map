@@ -11,3 +11,7 @@ dist
 
 # Real job postings are copyrighted and stay on this machine only.
 evals/private/
+
+# The spend log holds token counts and costs only, no document text. It is
+# kept out of git because it is a record of one machine's API usage.
+evals/spend-log.jsonl

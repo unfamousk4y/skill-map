@@ -21,12 +21,23 @@ Update this section as milestones land.
 - **Milestone 1 (foundation and 3D map screen): done and committed.**
 - **Milestone 2 (the engine without AI): done and committed.** Pipeline: `matcher.ts` finds skills, `verify.ts` checks quotes, `score.ts` counts, `rank.ts` orders. `src/extract/dictionary.ts` runs them in sequence.
 - **Milestone 3 (keyboard use, list view, phone layout, speed test): done and committed.** Accepted by the owner on screen; Claude only checked it by reading the page and sending key presses.
-- **Milestone 4 (Claude extraction): in progress.** Milestones 5 to 7: not started. Read the Claude API reference first and give a cost estimate before any paid call.
+- **Milestone 4 (Claude extraction): built, not committed.** Real test on 2026-11-10 with `node evals/smoke.mjs`: 8 documents for $0.0032, no quotes dropped, hostile posting ignored. On the built-in sample Claude and the free matcher agree almost exactly, because the sample names every skill outright; milestone 5 needs postings that describe skills without naming them.
+- Milestones 5 to 7: not started.
+- Decision 2026-11-10: beta testers use the free matcher at no cost. Claude runs only on the owner's machine, for the demo video and the accuracy comparison. The deployed site is static files with no server, so it cannot spend API credit. There is no Cloudflare Function and `wrangler` is not installed (both were in the original plan).
+- Decision 2026-11-10: the server uses the official `@anthropic-ai/sdk` library, not plain `fetch` as the plan first said, following Anthropic's guidance. Read the Claude API reference first and give a cost estimate before any paid call.
 - Speed test: open `/?bench`. "Our code" numbers from Claude's hidden preview on 2026-11-10 (Chrome 152): 60 skills 4.7 ms, 200 skills 7.8 ms, 500 skills 16.0 ms, 1000 skills 26.7 ms per frame. The owner's visible browser on 2026-11-10: our code 0 to 1 ms at 60 skills, 1 to 2 ms at 200, 3 to 4 ms at 500, 5 to 6 ms at 1000 (that browser's clock ticks in whole milliseconds), and 6.1 ms between frames on screen at every size, which is a steady 165 frames per second on a 165 Hz screen.
 - The map is a 3D "galaxy disc" drawn with hand-written projection maths in `src/map/camera.ts` (no graphics library). The flat view is the same renderer with the camera looking straight down. 3D work was capped at half a day; do not add more 3D features without asking.
 - Not yet watched running continuously by Claude: the opening animation and the idle spin. The preview pane only paints frames on input, so the owner needs to confirm these by eye.
 - Pasted text is held in memory only and is lost on reload. Saving it in the browser is milestone 6.
 - Ask before every commit.
+
+## Claude mode (local only)
+
+- Create a file named `.dev.vars` in the project root containing `ANTHROPIC_API_KEY=...`. It is git-ignored. Never print, log or commit it. Claude Code must not open this file.
+- `npm run dev` then serves `/api/extract` and `/api/status` from `server/devApi.ts`. The paste-in form shows a "Claude" option only when the key file exists.
+- Every call is recorded in `evals/spend-log.jsonl` (token counts and cost, never document text). `server/extractHandler.ts` refuses to call Claude once the total reaches $3.
+- Model `claude-haiku-5-5`, effort `low`, JSON output limited to our skill ids. Prices are in `server/pricing.ts`.
+- Tests use a fake client (`server/extractHandler.test.ts`, `src/extract/claude.test.ts`) and never spend money.
 
 ## Rules that always apply
 

@@ -75,6 +75,39 @@ function Legend() {
   )
 }
 
+/** How this map was produced, and anything the person should know about its reliability. */
+function AboutResult({ analysis }: { analysis: Analysis }) {
+  const nothingToSay =
+    analysis.method === 'dictionary' && analysis.notes.length === 0 && analysis.rejectedMentions === 0
+  if (nothingToSay) return null
+  return (
+    <section>
+      <h3>About this result</h3>
+      <p className="muted">
+        {analysis.method === 'claude'
+          ? 'Read by Claude. Every quote was checked word for word against your text.'
+          : 'Read by the free matcher, which finds skills that are named outright.'}
+      </p>
+      {analysis.rejectedMentions > 0 && (
+        <p className="muted">
+          {analysis.rejectedMentions} {analysis.rejectedMentions === 1 ? 'finding was' : 'findings were'} left out
+          because the quote did not match your text exactly.
+        </p>
+      )}
+      {analysis.notes.length > 0 && (
+        <ul className="notes">
+          {analysis.notes.map((note) => <li key={note}>{note}</li>)}
+        </ul>
+      )}
+      {analysis.otherSkills.length > 0 && (
+        <p className="muted">
+          Also mentioned, but not on this tool's list yet: {analysis.otherSkills.join(', ')}.
+        </p>
+      )}
+    </section>
+  )
+}
+
 function Overview({ analysis, scene, onSelect, onEdit }: Omit<Props, 'selectedId' | 'taxonomy'>) {
   const next = analysis.next.map((id) => scene.byId.get(id)).filter((n) => n !== undefined)
   const asked = scene.nodes.filter((n) => n.demand > 0)
@@ -131,6 +164,7 @@ function Overview({ analysis, scene, onSelect, onEdit }: Omit<Props, 'selectedId
         )}
       </section>
       <Legend />
+      <AboutResult analysis={analysis} />
     </>
   )
 }

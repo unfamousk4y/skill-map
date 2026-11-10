@@ -1,4 +1,4 @@
-import raw from '../data/taxonomy.json'
+import raw from '../data/taxonomy.json' with { type: 'json' }
 import type { Category, Skill, Taxonomy } from './types.ts'
 
 type RawTaxonomy = { version: string; categories: Category[]; skills: Skill[] }
