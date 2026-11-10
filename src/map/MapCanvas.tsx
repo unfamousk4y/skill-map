@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { pathToKnown, type PathToKnown } from '../domain/path.ts'
 import { easeCamera, fitCamera, type Camera } from './camera.ts'
+import { nextInDirection, type Direction } from './navigate.ts'
 import { draw, pick, revealDuration, type Frame, type Theme } from './renderer.ts'
 import type { Scene } from './scene.ts'
+import { readTheme } from './theme.ts'
 
 type Props = {
   scene: Scene
@@ -20,27 +22,23 @@ const IDLE_SPIN = 0.035
 /** Seconds without input before the idle spin resumes. */
 const IDLE_AFTER = 4
 
-/** Reads the map colours from the CSS variables in styles.css. */
-function readTheme(): Theme {
-  const css = getComputedStyle(document.documentElement)
-  const v = (name: string) => css.getPropertyValue(name).trim()
-  return {
-    bg: v('--bg'),
-    surface: v('--surface'),
-    line: v('--line'),
-    text: v('--text'),
-    muted: v('--muted'),
-    have: v('--have'),
-    haveInk: v('--have-ink'),
-    next: v('--next'),
-    gap: v('--gap'),
-    glow: Number.parseFloat(v('--map-glow')) || 0,
-  }
+const ARROWS: Record<string, Direction> = {
+  ArrowLeft: 'left',
+  ArrowRight: 'right',
+  ArrowUp: 'up',
+  ArrowDown: 'down',
+}
+const STEPS: Record<Direction, [number, number]> = {
+  left: [-1, 0],
+  right: [1, 0],
+  up: [0, -1],
+  down: [0, 1],
 }
 
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 export function MapCanvas({ scene, selectedId, onSelect }: Props) {
+  const hintId = useId()
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -59,6 +57,9 @@ export function MapCanvas({ scene, selectedId, onSelect }: Props) {
   const userMoved = useRef(false)
   const dirty = useRef(true)
   const drag = useRef<{ x: number; y: number; moved: number; pan: boolean } | null>(null)
+  // Fingers (or pens, or mouse buttons) currently down, for two-finger zoom.
+  const pointers = useRef(new Map<number, { x: number; y: number }>())
+  const pinch = useRef<{ distance: number; x: number; y: number } | null>(null)
   const lastInput = useRef(0)
   const startedAt = useRef<number | null>(null)
 
@@ -219,15 +220,49 @@ export function MapCanvas({ scene, selectedId, onSelect }: Props) {
     return pick(frame.current.nodes, e.clientX - box.left, e.clientY - box.top)
   }
 
+  /** Distance between the two fingers, and the point half-way between them. */
+  const twoFingers = (box: DOMRect) => {
+    const [a, b] = [...pointers.current.values()]
+    if (!a || !b) return null
+    return {
+      distance: Math.hypot(a.x - b.x, a.y - b.y),
+      x: (a.x + b.x) / 2 - box.left,
+      y: (a.y + b.y) / 2 - box.top,
+    }
+  }
+
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId)
-    // In the flat view a drag slides the map. In 3D it turns and tilts it,
-    // and holding Shift slides it instead.
-    drag.current = { x: e.clientX, y: e.clientY, moved: 0, pan: !tiltedRef.current || e.shiftKey }
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (pointers.current.size === 2) {
+      // A second finger turns the gesture into pinch-to-zoom.
+      pinch.current = twoFingers(e.currentTarget.getBoundingClientRect())
+      drag.current = null
+    } else {
+      // In the flat view a drag slides the map. In 3D it turns and tilts it,
+      // and holding Shift slides it instead.
+      drag.current = { x: e.clientX, y: e.clientY, moved: 0, pan: !tiltedRef.current || e.shiftKey }
+    }
     touched()
   }
 
   const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (pointers.current.has(e.pointerId)) pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+    const before = pinch.current
+    if (before) {
+      const now = twoFingers(e.currentTarget.getBoundingClientRect())
+      if (!now) return
+      // Fingers moving apart zoom in around the point between them. Both
+      // fingers moving together slide the map.
+      zoomAt(now.x, now.y, now.distance / Math.max(1, before.distance))
+      const t = target.current
+      target.current = { ...t, x: t.x + now.x - before.x, y: t.y + now.y - before.y }
+      camera.current = target.current
+      pinch.current = now
+      return
+    }
+
     const d = drag.current
     if (d) {
       const dx = e.clientX - d.x
@@ -259,11 +294,23 @@ export function MapCanvas({ scene, selectedId, onSelect }: Props) {
   }
 
   const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    pointers.current.delete(e.pointerId)
     const d = drag.current
     drag.current = null
     touched()
+    if (pinch.current) {
+      // Lifting a finger after a pinch must not count as a tap on a skill.
+      if (pointers.current.size < 2) pinch.current = null
+      return
+    }
     // A press that barely moved is a click, not a drag.
     if (d && d.moved <= 4) onSelect(nodeAt(e))
+  }
+
+  const onPointerCancel = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    pointers.current.delete(e.pointerId)
+    drag.current = null
+    pinch.current = null
   }
 
   const zoomButton = (factor: number) => () =>
@@ -286,17 +333,56 @@ export function MapCanvas({ scene, selectedId, onSelect }: Props) {
     touched()
   }
 
+  const onKeyDown = (e: React.KeyboardEvent<HTMLCanvasElement>) => {
+    const direction = ARROWS[e.key]
+    if (direction) {
+      e.preventDefault()
+      const [dx, dy] = STEPS[direction]
+      if (e.shiftKey) {
+        // Shift + arrows move the camera: turn and tilt in 3D, slide when flat.
+        const t = target.current
+        target.current = tiltedRef.current
+          ? { ...t, yaw: t.yaw - dx * 0.2, pitch: Math.min(MAX_PITCH, Math.max(0, t.pitch - dy * 0.12)) }
+          : { ...t, x: t.x - dx * 60, y: t.y - dy * 60 }
+        userMoved.current = true
+        touched()
+        return
+      }
+      // Plain arrows move between skills, as they are laid out on screen now.
+      const current = selectedRef.current
+      if (current) {
+        const to = nextInDirection(frame.current.nodes, current, direction)
+        if (to) onSelect(to)
+      } else {
+        // Nothing selected yet: start with a "learn next" skill, or failing that any skill.
+        const start = sceneRef.current.nodes.find((n) => n.next) ?? sceneRef.current.nodes[0]
+        if (start) onSelect(start.id)
+      }
+      touched()
+      return
+    }
+    if (e.key === '+' || e.key === '=') zoomButton(1.3)()
+    else if (e.key === '-' || e.key === '_') zoomButton(1 / 1.3)()
+    else if (e.key === '0') fit()
+    else if (e.key === 'd' || e.key === 'D') toggleTilt()
+  }
+
   return (
     <div className="map" ref={wrapRef}>
       <canvas
         ref={canvasRef}
         className="map__canvas"
-        role="img"
-        aria-label="Skill map. A text list of the same skills is planned for milestone 3."
+        // "application" tells a screen reader to pass the arrow keys through to
+        // the map instead of using them to read the page.
+        role="application"
+        tabIndex={0}
+        aria-label="Skill map"
+        aria-describedby={hintId}
+        onKeyDown={onKeyDown}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        onPointerCancel={() => (drag.current = null)}
+        onPointerCancel={onPointerCancel}
         onPointerLeave={() => {
           hoverId.current = null
           dirty.current = true
@@ -312,6 +398,10 @@ export function MapCanvas({ scene, selectedId, onSelect }: Props) {
       </div>
       <p className="map__hint">
         {tilted ? 'Drag to turn · Shift-drag to move · Scroll to zoom' : 'Drag to move · Scroll to zoom'}
+      </p>
+      <p className="visually-hidden" id={hintId}>
+        Arrow keys move between skills. Shift and arrow keys move the view. Plus and minus zoom, 0
+        fits the map, D switches between 3D and flat. The List view shows the same skills as text.
       </p>
     </div>
   )

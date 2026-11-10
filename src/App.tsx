@@ -2,18 +2,26 @@ import { useEffect, useMemo, useState } from 'react'
 import { sampleLabel, samplePostings, sampleResume } from './data/sampleTexts.ts'
 import { taxonomy } from './domain/taxonomy.ts'
 import { analyseWithDictionary } from './extract/dictionary.ts'
+import { BenchScreen } from './features/BenchScreen.tsx'
 import { IntakeScreen, type Draft } from './features/IntakeScreen.tsx'
+import { ListView } from './features/ListView.tsx'
 import { SkillPanel } from './features/SkillPanel.tsx'
 import { MapCanvas } from './map/MapCanvas.tsx'
 import { buildScene } from './map/scene.ts'
 
 const sample: Draft = { postings: samplePostings, resume: sampleResume }
 
+/** The developer speed test lives at ?bench. Everything else is the app. */
 export function App() {
+  return new URLSearchParams(window.location.search).has('bench') ? <BenchScreen /> : <SkillMapApp />
+}
+
+function SkillMapApp() {
   // null means "showing the built-in fictional sample".
   const [own, setOwn] = useState<Draft | null>(null)
   const [editing, setEditing] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [view, setView] = useState<'map' | 'list'>('map')
 
   // The whole analysis is recomputed from the text. It takes a few
   // milliseconds, so there is no need to store the result anywhere.
@@ -75,6 +83,14 @@ export function App() {
               </div>
             </dl>
             {analysis.fictional && <p className="badge">Fictional sample data</p>}
+            <div className="switch" role="group" aria-label="View">
+              <button type="button" aria-pressed={view === 'map'} onClick={() => setView('map')}>
+                Map
+              </button>
+              <button type="button" aria-pressed={view === 'list'} onClick={() => setView('list')}>
+                List
+              </button>
+            </div>
             <div className="top__actions">
               {own && (
                 <button type="button" className="quiet" onClick={showSample}>
@@ -99,8 +115,12 @@ export function App() {
         </main>
       ) : (
         <main className="stage">
-          {/* The key makes a new map, with its opening animation, for each new analysis. */}
-          <MapCanvas key={own ? 'own' : 'sample'} scene={scene} selectedId={selectedId} onSelect={setSelectedId} />
+          {view === 'map' ? (
+            // The key makes a new map, with its opening animation, for each new analysis.
+            <MapCanvas key={own ? 'own' : 'sample'} scene={scene} selectedId={selectedId} onSelect={setSelectedId} />
+          ) : (
+            <ListView analysis={analysis} taxonomy={taxonomy} selectedId={selectedId} onSelect={setSelectedId} />
+          )}
           <SkillPanel
             analysis={analysis}
             scene={scene}

@@ -12,13 +12,17 @@ npm run lint
 npm test
 ```
 
+Developer speed test: run `npm run dev` and open http://localhost:5183/?bench
+
 ## Where things stand
 
 Update this section as milestones land.
 
 - **Milestone 1 (foundation and 3D map screen): done and committed.**
 - **Milestone 2 (the engine without AI): done and committed.** Pipeline: `matcher.ts` finds skills, `verify.ts` checks quotes, `score.ts` counts, `rank.ts` orders. `src/extract/dictionary.ts` runs them in sequence.
-- **Milestone 3 (keyboard use, list view, phone layout, frame-time numbers): in progress.** Milestones 4 to 7: not started.
+- **Milestone 3 (keyboard use, list view, phone layout, speed test): done and committed.** Accepted by the owner on screen; Claude only checked it by reading the page and sending key presses.
+- **Milestone 4 (Claude extraction): in progress.** Milestones 5 to 7: not started. Read the Claude API reference first and give a cost estimate before any paid call.
+- Speed test: open `/?bench`. "Our code" numbers from Claude's hidden preview on 2026-11-10 (Chrome 152): 60 skills 4.7 ms, 200 skills 7.8 ms, 500 skills 16.0 ms, 1000 skills 26.7 ms per frame. The owner's visible browser on 2026-11-10: our code 0 to 1 ms at 60 skills, 1 to 2 ms at 200, 3 to 4 ms at 500, 5 to 6 ms at 1000 (that browser's clock ticks in whole milliseconds), and 6.1 ms between frames on screen at every size, which is a steady 165 frames per second on a 165 Hz screen.
 - The map is a 3D "galaxy disc" drawn with hand-written projection maths in `src/map/camera.ts` (no graphics library). The flat view is the same renderer with the camera looking straight down. 3D work was capped at half a day; do not add more 3D features without asking.
 - Not yet watched running continuously by Claude: the opening animation and the idle spin. The preview pane only paints frames on input, so the owner needs to confirm these by eye.
 - Pasted text is held in memory only and is lost on reload. Saving it in the browser is milestone 6.

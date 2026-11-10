@@ -612,3 +612,206 @@ button {
     grid-template-rows: minmax(0, 1fr);
   }
 }
+
+/* ---------- Map / List switch ---------- */
+
+.switch {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.switch button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 14px;
+}
+
+.switch button + button {
+  border-left: 1px solid var(--line);
+}
+
+.switch button[aria-pressed='true'] {
+  background: var(--raised);
+  color: var(--text);
+}
+
+.switch button:focus-visible {
+  outline-offset: -2px;
+}
+
+.map__canvas:focus-visible {
+  outline-offset: -3px;
+}
+
+/* ---------- list view ---------- */
+
+.list {
+  display: grid;
+  gap: 24px;
+  align-content: start;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 22px 20px 40px;
+}
+
+.list__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.list__table caption {
+  padding-bottom: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.list__table th,
+.list__table td {
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-weight: 400;
+  text-align: left;
+  vertical-align: baseline;
+}
+
+.list__table thead th {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.list__table .num {
+  text-align: right;
+}
+
+.list__table tbody th button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 3px;
+}
+
+.list__table tbody th button:hover {
+  text-decoration-color: var(--text);
+}
+
+.list__table tr.is-selected {
+  background: var(--raised);
+}
+
+.list__next {
+  color: var(--next);
+  font-weight: 600;
+}
+
+/* ---------- developer speed test (?bench) ---------- */
+
+.bench {
+  display: grid;
+  gap: 16px;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+.bench h1 {
+  font-size: 22px;
+}
+
+.bench__canvas {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Fingers need bigger buttons than a mouse pointer does. */
+@media (pointer: coarse) {
+  .map__controls button {
+    min-width: 44px;
+    height: 44px;
+  }
+
+  .chip,
+  .quiet {
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 760px) {
+  .list {
+    padding: 16px;
+  }
+
+  /* On a phone the table keeps its columns and scrolls sideways inside its own box. */
+  .list__table {
+    min-width: 560px;
+  }
+
+  .map__controls {
+    left: 10px;
+    bottom: 10px;
+  }
+}
+
+/* Phone header: keep it to two short rows so the map gets the space. */
+@media (max-width: 760px) {
+  .top {
+    gap: 8px 14px;
+  }
+
+  .top__title {
+    flex: 1 1 0;
+    min-width: 90px;
+  }
+
+  .top__title p {
+    display: none;
+  }
+
+  .top__stats {
+    gap: 16px;
+    order: 3;
+  }
+
+  .top__stats dt {
+    font-size: 10px;
+  }
+
+  .badge {
+    order: 4;
+    align-self: center;
+  }
+
+  .top__actions {
+    flex-basis: auto;
+  }
+
+  .top .primary,
+  .top .quiet,
+  .switch button {
+    font-size: 13px;
+    padding: 7px 10px;
+  }
+}

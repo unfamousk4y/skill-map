@@ -5,7 +5,7 @@
 // drawn with ordinary 2D canvas calls, far things first.
 
 import { edgeKey, type PathToKnown } from '../domain/path.ts'
-import { project, type Camera } from './camera.ts'
+import { NARROW_WIDTH, project, type Camera } from './camera.ts'
 import type { Scene, SceneEdge, SceneNode } from './scene.ts'
 
 export type Theme = {
@@ -178,9 +178,9 @@ function drawStars(
     if (p.sx < 0 || p.sx > width || p.sy < 0 || p.sy > height) continue
     const twinkle = state.motion ? 0.75 + 0.25 * Math.sin(state.time * star.speed + star.phase) : 1
     ctx.globalAlpha = star.alpha * twinkle * fadeIn * (dark ? 0.8 : 0.35)
-    ctx.beginPath()
-    ctx.arc(p.sx, p.sy, star.size, 0, Math.PI * 2)
-    ctx.fill()
+    // A 1 to 3 pixel square looks the same as a circle and is much cheaper to draw.
+    const side = star.size * 1.8
+    ctx.fillRect(p.sx - side / 2, p.sy - side / 2, side, side)
   }
   ctx.globalAlpha = 1
 }
@@ -382,12 +382,17 @@ function drawNode(
   ctx.arc(s.sx, s.sy, r, 0, Math.PI * 2)
   if (n.have) {
     if (theme.glow > 0 && !dim) {
-      ctx.shadowColor = theme.have
-      ctx.shadowBlur = theme.glow
+      const sprite = glowSprite(theme.have)
+      if (sprite) {
+        const reach = r + theme.glow * 1.4
+        const before = ctx.globalAlpha
+        ctx.globalAlpha = before * 0.55
+        ctx.drawImage(sprite, s.sx - reach, s.sy - reach, reach * 2, reach * 2)
+        ctx.globalAlpha = before
+      }
     }
     ctx.fillStyle = theme.have
     ctx.fill()
-    ctx.shadowBlur = 0
   } else {
     ctx.fillStyle = n.steppingStone ? theme.bg : theme.surface
     ctx.fill()
@@ -415,6 +420,49 @@ function drawNode(
     ctx.stroke()
   }
   ctx.globalAlpha = 1
+}
+
+// The glow around a lit skill is one soft blob, painted once into a small
+// hidden canvas and then stamped under each circle. Asking the browser to blur
+// every circle on every frame (shadowBlur) was the slowest thing in the frame.
+let glowCache: { color: string; sprite: HTMLCanvasElement | null } | null = null
+
+function glowSprite(color: string): HTMLCanvasElement | null {
+  if (glowCache?.color === color) return glowCache.sprite
+  let sprite: HTMLCanvasElement | null = null
+  const hex = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color)
+  if (hex && typeof document !== 'undefined') {
+    const [r, g, b] = [hex[1]!, hex[2]!, hex[3]!].map((part) => Number.parseInt(part, 16))
+    sprite = document.createElement('canvas')
+    sprite.width = sprite.height = 128
+    const g2 = sprite.getContext('2d')
+    if (g2) {
+      const fade = g2.createRadialGradient(64, 64, 0, 64, 64, 64)
+      fade.addColorStop(0, `rgba(${r}, ${g}, ${b}, 1)`)
+      fade.addColorStop(0.45, `rgba(${r}, ${g}, ${b}, 0.45)`)
+      fade.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`)
+      g2.fillStyle = fade
+      g2.fillRect(0, 0, 128, 128)
+    }
+  }
+  glowCache = { color, sprite }
+  return sprite
+}
+
+// Measuring text is slow, and a skill's name never changes, so each name is
+// wrapped and measured once and remembered.
+const labelCache = new Map<string, { lines: string[]; width: number }>()
+
+function measuredLabel(ctx: CanvasRenderingContext2D, name: string, weight: number): { lines: string[]; width: number } {
+  const key = weight + name
+  let known = labelCache.get(key)
+  if (!known) {
+    const lines = wrapLabel(name)
+    ctx.font = `${weight} ${LABEL_SIZE}px ${FONT}`
+    known = { lines, width: Math.max(...lines.map((line) => ctx.measureText(line).width)) }
+    labelCache.set(key, known)
+  }
+  return known
 }
 
 type Box = { left: number; top: number; right: number; bottom: number }
@@ -453,14 +501,35 @@ function drawLabels(
 ): Set<string> {
   const shown = new Set<string>()
   // Space already used: category names, every circle, then each skill name as it is placed.
-  const circles = nodes.map((s) => ({
-    id: s.id,
-    box: { left: s.sx - s.r, right: s.sx + s.r, top: s.sy - s.r, bottom: s.sy + s.r },
-  }))
-  const taken: Box[] = [...reserved]
-  const free = (box: Box, own: string) =>
-    !taken.some((other) => overlaps(box, other)) &&
-    !circles.some((c) => c.id !== own && overlaps(box, c.box))
+  //
+  // Checking every name against every circle gets slow on big maps, so the
+  // screen is cut into squares ("cells"). Each circle is filed under the cells
+  // it touches, and a name only checks the circles filed under its own cells.
+  const CELL = 96
+  const cellKey = (cx: number, cy: number) => cx * 4096 + cy
+  const grid = new Map<number, { id: string; box: Box }[]>()
+  const cellsOf = (box: Box, visit: (key: number) => void) => {
+    for (let cx = Math.floor(box.left / CELL); cx <= Math.floor(box.right / CELL); cx++) {
+      for (let cy = Math.floor(box.top / CELL); cy <= Math.floor(box.bottom / CELL); cy++) visit(cellKey(cx, cy))
+    }
+  }
+  const file = (entry: { id: string; box: Box }) =>
+    cellsOf(entry.box, (key) => {
+      const cell = grid.get(key)
+      if (cell) cell.push(entry)
+      else grid.set(key, [entry])
+    })
+  for (const s of nodes) {
+    file({ id: s.id, box: { left: s.sx - s.r, right: s.sx + s.r, top: s.sy - s.r, bottom: s.sy + s.r } })
+  }
+  for (const box of reserved) file({ id: '', box })
+  const free = (box: Box, own: string) => {
+    let clear = true
+    cellsOf(box, (key) => {
+      if (clear && grid.get(key)?.some((entry) => entry.id !== own && overlaps(box, entry.box))) clear = false
+    })
+    return clear
+  }
 
   const priority = (s: ScreenNode) => labelPriority(scene.byId.get(s.id)!, focus, state)
   const byPriority = [...nodes].sort((a, b) => priority(b) - priority(a) || a.id.localeCompare(b.id))
@@ -470,10 +539,9 @@ function drawLabels(
 
   for (const s of byPriority) {
     const n = scene.byId.get(s.id)!
-    const lines = wrapLabel(n.name)
+    const weight = n.id === focus ? 650 : 500
+    const { lines, width } = measuredLabel(ctx, n.name, weight)
     const textHeight = lines.length * (LABEL_SIZE + 2)
-    ctx.font = `${n.id === focus ? 650 : 500} ${LABEL_SIZE}px ${FONT}`
-    const width = Math.max(...lines.map((line) => ctx.measureText(line).width))
     const boxAt = (top: number): Box => ({
       left: s.sx - width / 2 - 3,
       right: s.sx + width / 2 + 3,
@@ -487,8 +555,10 @@ function drawLabels(
     const forced = n.id === focus || n.next
     const box = free(below, n.id) ? below : free(above, n.id) ? above : forced ? below : null
     if (!box) continue
-    taken.push(box)
+    // A placed name blocks later names. It gets an id no skill has, so it blocks everyone.
+    file({ id: '', box })
     shown.add(n.id)
+    ctx.font = `${weight} ${LABEL_SIZE}px ${FONT}`
 
     ctx.globalAlpha = (dimmed(n.id) ? 0.25 : 1) * depthFade(s.r / n.radius, cam)
     ctx.fillStyle = n.have || n.id === focus || n.next ? theme.text : theme.muted
@@ -524,6 +594,13 @@ function drawSectorNames(
   if ((scene.ringRadii[0] ?? 0) * centre.size * Math.cos(cam.pitch) > 46) {
     ctx.textAlign = 'center'
     ctx.fillText('FOUNDATIONS', centre.sx, centre.sy)
+  }
+
+  // On a phone there is no room beside the disc. Categories are still in the
+  // details panel and the list view.
+  if (width < NARROW_WIDTH) {
+    ctx.globalAlpha = 1
+    return boxes
   }
 
   for (const s of scene.sectors) {

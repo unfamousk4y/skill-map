@@ -15,6 +15,9 @@ export type Camera = { yaw: number; pitch: number; scale: number; x: number; y: 
 /** How far the eye is from the centre of the disc, in map units. Smaller means a stronger 3D effect. */
 export const EYE_DISTANCE = 2400
 
+/** Below this canvas width (a phone held upright) the map drops its category names. */
+export const NARROW_WIDTH = 520
+
 export type Projected = {
   /** Screen position in pixels. */
   sx: number
@@ -61,8 +64,11 @@ export function fitCamera(
 ): Camera {
   // The nearest edge is magnified the most, so that is what has to fit.
   const nearest = EYE_DISTANCE / (EYE_DISTANCE - radius * Math.sin(pitch))
-  const roomWide = Math.max(60, width / 2 - 84)
-  const roomTall = Math.max(60, height / 2 - 64)
+  // Category names sit beside the disc and need room. A narrow (phone) canvas
+  // leaves them out, so the disc can use nearly the full width.
+  const narrow = width < NARROW_WIDTH
+  const roomWide = Math.max(60, width / 2 - (narrow ? 26 : 84))
+  const roomTall = Math.max(60, height / 2 - (narrow ? 40 : 64))
   const fitWide = roomWide / (radius * nearest)
   const fitTall = roomTall / (radius * Math.max(Math.cos(pitch), 0.2) * nearest)
   const scale = Math.min(1.4, Math.max(0.12, Math.min(fitWide, fitTall)))
