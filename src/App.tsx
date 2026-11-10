@@ -1,14 +1,33 @@
 import { useEffect, useMemo, useState } from 'react'
-import { sampleAnalysis } from './data/sampleAnalysis.ts'
+import { sampleLabel, samplePostings, sampleResume } from './data/sampleTexts.ts'
 import { taxonomy } from './domain/taxonomy.ts'
+import { analyseWithDictionary } from './extract/dictionary.ts'
+import { IntakeScreen, type Draft } from './features/IntakeScreen.tsx'
 import { SkillPanel } from './features/SkillPanel.tsx'
 import { MapCanvas } from './map/MapCanvas.tsx'
 import { buildScene } from './map/scene.ts'
 
+const sample: Draft = { postings: samplePostings, resume: sampleResume }
+
 export function App() {
-  const analysis = sampleAnalysis
-  const scene = useMemo(() => buildScene(analysis, taxonomy), [analysis])
+  // null means "showing the built-in fictional sample".
+  const [own, setOwn] = useState<Draft | null>(null)
+  const [editing, setEditing] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  // The whole analysis is recomputed from the text. It takes a few
+  // milliseconds, so there is no need to store the result anywhere.
+  const analysis = useMemo(
+    () =>
+      analyseWithDictionary(
+        own
+          ? { label: 'Your postings and resume', fictional: false, ...own }
+          : { label: sampleLabel, fictional: true, ...sample },
+        taxonomy,
+      ),
+    [own],
+  )
+  const scene = useMemo(() => buildScene(analysis, taxonomy), [analysis])
 
   // Escape closes the detail view from anywhere on the page.
   useEffect(() => {
@@ -22,6 +41,17 @@ export function App() {
   const asked = scene.nodes.filter((n) => n.demand > 0)
   const covered = asked.filter((n) => n.have).length
 
+  const build = (draft: Draft) => {
+    setOwn(draft)
+    setSelectedId(null)
+    setEditing(false)
+  }
+
+  const showSample = () => {
+    setOwn(null)
+    setSelectedId(null)
+  }
+
   return (
     <div className="app">
       <header className="top">
@@ -29,31 +59,58 @@ export function App() {
           <h1>Skill Map</h1>
           <p>{analysis.label}</p>
         </div>
-        <dl className="top__stats">
-          <div>
-            <dt>Postings</dt>
-            <dd>{analysis.postings.length}</dd>
-          </div>
-          <div>
-            <dt>Skills covered</dt>
-            <dd>
-              {covered}
-              <span> of {asked.length}</span>
-            </dd>
-          </div>
-        </dl>
-        {analysis.fictional && <p className="badge">Fictional sample data</p>}
+        {!editing && (
+          <>
+            <dl className="top__stats">
+              <div>
+                <dt>Postings</dt>
+                <dd>{analysis.postings.length}</dd>
+              </div>
+              <div>
+                <dt>Skills covered</dt>
+                <dd>
+                  {covered}
+                  <span> of {asked.length}</span>
+                </dd>
+              </div>
+            </dl>
+            {analysis.fictional && <p className="badge">Fictional sample data</p>}
+            <div className="top__actions">
+              {own && (
+                <button type="button" className="quiet" onClick={showSample}>
+                  Show the sample
+                </button>
+              )}
+              <button type="button" className="primary" onClick={() => setEditing(true)}>
+                {own ? 'Edit my text' : 'Use my own postings'}
+              </button>
+            </div>
+          </>
+        )}
       </header>
-      <main className="stage">
-        <MapCanvas scene={scene} selectedId={selectedId} onSelect={setSelectedId} />
-        <SkillPanel
-          analysis={analysis}
-          scene={scene}
-          taxonomy={taxonomy}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-        />
-      </main>
+
+      {editing ? (
+        <main className="stage stage--single">
+          <IntakeScreen
+            initial={own ?? { postings: [''], resume: '' }}
+            onBuild={build}
+            onCancel={() => setEditing(false)}
+          />
+        </main>
+      ) : (
+        <main className="stage">
+          {/* The key makes a new map, with its opening animation, for each new analysis. */}
+          <MapCanvas key={own ? 'own' : 'sample'} scene={scene} selectedId={selectedId} onSelect={setSelectedId} />
+          <SkillPanel
+            analysis={analysis}
+            scene={scene}
+            taxonomy={taxonomy}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onEdit={() => setEditing(true)}
+          />
+        </main>
+      )}
     </div>
   )
 }

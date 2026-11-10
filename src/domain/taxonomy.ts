@@ -28,7 +28,7 @@ export function validateTaxonomy(data: RawTaxonomy): string[] {
     if (ids.has(s.id)) problems.push(`duplicate id: ${s.id}`)
     ids.add(s.id)
     if (!cats.has(s.cat)) problems.push(`${s.id}: unknown category ${s.cat}`)
-    for (const term of [s.name, ...s.aliases]) {
+    for (const term of [s.name, ...s.aliases, ...(s.cased ?? []), ...(s.listed ?? [])]) {
       const key = normalise(term)
       const other = owner.get(key)
       if (other && other !== s.id) problems.push(`"${key}" is claimed by ${other} and ${s.id}`)

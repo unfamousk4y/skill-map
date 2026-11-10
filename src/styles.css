@@ -13,6 +13,7 @@
   --next: #58d6c7;
   --gap: #70808f;
   --map-glow: 16;
+  --danger: #ff8f8f;
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -30,6 +31,7 @@
     --next: #08796f;
     --gap: #77818d;
     --map-glow: 0;
+    --danger: #b3261e;
   }
 }
 
@@ -443,5 +445,170 @@ button {
   .panel__body {
     padding: 16px 16px 24px;
     gap: 18px;
+  }
+}
+
+/* ---------- buttons shared by the header and forms ---------- */
+
+.primary {
+  background: var(--next);
+  border: 1px solid var(--next);
+  border-radius: 8px;
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 650;
+  padding: 8px 14px;
+  white-space: nowrap;
+}
+
+.primary:hover {
+  filter: brightness(1.08);
+}
+
+.top__actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ---------- the arithmetic line in a skill's details ---------- */
+
+.sum {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sum span:first-child {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.next-list button {
+  flex-wrap: wrap;
+}
+
+.next-list__why {
+  flex-basis: 100%;
+  white-space: normal !important;
+}
+
+/* ---------- paste-in screen ---------- */
+
+.stage--single {
+  grid-template-columns: minmax(0, 1fr);
+  overflow-y: auto;
+}
+
+.intake {
+  display: grid;
+  gap: 24px;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 28px 20px 48px;
+  align-content: start;
+}
+
+.intake__intro {
+  display: grid;
+  gap: 6px;
+}
+
+.intake h2 {
+  font-size: 22px;
+  font-weight: 650;
+}
+
+.intake__group {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.intake__group legend {
+  padding: 0 0 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 34px;
+}
+
+.field label {
+  font-weight: 600;
+}
+
+.field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.field textarea::placeholder {
+  color: var(--muted);
+}
+
+.field textarea[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.field__note {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.intake__add {
+  justify-self: start;
+}
+
+.intake__error {
+  padding: 10px 12px;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.intake__actions {
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 760px) {
+  .top__actions {
+    flex-basis: 100%;
+  }
+
+  .stage--single {
+    grid-template-rows: minmax(0, 1fr);
   }
 }

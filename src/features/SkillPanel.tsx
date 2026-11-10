@@ -1,5 +1,6 @@
-import type { Scene, SceneNode } from '../map/scene.ts'
+import { demandScore, PREFERRED_WEIGHT, REQUIRED_WEIGHT } from '../domain/score.ts'
 import type { Analysis, Quote, Taxonomy } from '../domain/types.ts'
+import type { Scene, SceneNode } from '../map/scene.ts'
 
 type Props = {
   analysis: Analysis
@@ -7,12 +8,20 @@ type Props = {
   taxonomy: Taxonomy
   selectedId: string | null
   onSelect: (id: string | null) => void
+  /** Open the screen where postings and the resume are pasted. */
+  onEdit: () => void
 }
 
 function statusOf(node: SceneNode): { label: string; kind: 'have' | 'gap' | 'stone' } {
   if (node.have) return { label: 'On your resume', kind: 'have' }
   if (node.steppingStone) return { label: 'Stepping stone', kind: 'stone' }
   return { label: 'Gap', kind: 'gap' }
+}
+
+/** "A", "A and B", "A, B and C". */
+function listOf(names: string[]): string {
+  if (names.length <= 1) return names.join('')
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
 }
 
 function Swatch({ kind }: { kind: 'have' | 'gap' | 'next' | 'stone' }) {
@@ -47,58 +56,98 @@ function Quotes({ title, quotes }: { title: string; quotes: Quote[] }) {
   )
 }
 
-function Overview({ analysis, scene, onSelect }: Omit<Props, 'selectedId' | 'taxonomy'>) {
+function Legend() {
+  return (
+    <section>
+      <h3>Reading the map</h3>
+      <ul className="legend">
+        <li><Swatch kind="have" /> On your resume</li>
+        <li><Swatch kind="gap" /> Asked for, not on your resume</li>
+        <li><Swatch kind="next" /> Best to learn next</li>
+        <li><Swatch kind="stone" /> Stepping stone toward a wanted skill</li>
+      </ul>
+      <p className="muted">
+        The number in a circle is how many postings ask for that skill, and bigger circles are
+        asked for more. Rings run from foundations in the middle to advanced skills at the edge.
+        Lines join a skill to what it builds on.
+      </p>
+    </section>
+  )
+}
+
+function Overview({ analysis, scene, onSelect, onEdit }: Omit<Props, 'selectedId' | 'taxonomy'>) {
   const next = analysis.next.map((id) => scene.byId.get(id)).filter((n) => n !== undefined)
+  const asked = scene.nodes.filter((n) => n.demand > 0)
+
+  // Nothing to draw: say why, and what to do about it.
+  if (asked.length === 0) {
+    return (
+      <section>
+        <h2>No skills found</h2>
+        <p>
+          {analysis.postings.length === 0
+            ? 'There are no postings to read yet.'
+            : 'None of the skills this tool knows were named in those postings. It covers software, data and AI roles, and it only spots skills that are named outright.'}
+        </p>
+        <button type="button" className="primary" onClick={onEdit}>
+          Edit the postings
+        </button>
+      </section>
+    )
+  }
+
   return (
     <>
       <section>
         <h2>Learn next</h2>
-        <p className="muted">
-          The gaps that the most postings ask for and that you are ready to start.
-        </p>
-        <ol className="next-list">
-          {next.map((node) => (
-            <li key={node.id}>
-              <button type="button" onClick={() => onSelect(node.id)}>
-                <span className="next-list__name">{node.name}</span>
-                <span className="muted">
-                  {node.demand} of {analysis.postings.length} postings
-                </span>
-              </button>
-            </li>
-          ))}
-        </ol>
+        {next.length > 0 ? (
+          <>
+            <p className="muted">
+              Skills you can start today, ranked by how many postings want them and what they lead to.
+            </p>
+            <ol className="next-list">
+              {next.map((node) => {
+                const unlocks = (analysis.unlocks[node.id] ?? []).map((id) => scene.byId.get(id)?.name ?? id)
+                return (
+                  <li key={node.id}>
+                    <button type="button" onClick={() => onSelect(node.id)}>
+                      <span className="next-list__name">{node.name}</span>
+                      <span className="muted">
+                        {node.demand > 0
+                          ? `${node.demand} of ${analysis.postings.length} postings`
+                          : 'Stepping stone'}
+                      </span>
+                      {unlocks.length > 0 && (
+                        <span className="next-list__why muted">Leads to {listOf(unlocks.slice(0, 3))}</span>
+                      )}
+                    </button>
+                  </li>
+                )
+              })}
+            </ol>
+          </>
+        ) : (
+          <p>Your resume already shows every skill these postings name.</p>
+        )}
       </section>
-
-      <section>
-        <h3>Reading the map</h3>
-        <ul className="legend">
-          <li><Swatch kind="have" /> On your resume</li>
-          <li><Swatch kind="gap" /> Asked for, not on your resume</li>
-          <li><Swatch kind="next" /> Best to learn next</li>
-          <li><Swatch kind="stone" /> Stepping stone toward a wanted skill</li>
-        </ul>
-        <p className="muted">
-          The number in a circle is how many postings ask for that skill, and bigger circles are
-          asked for more. Rings run from foundations in the middle to advanced skills at the edge.
-          Lines join a skill to what it builds on.
-        </p>
-      </section>
+      <Legend />
     </>
   )
 }
 
-function Detail({ analysis, scene, taxonomy, node, onSelect }: Omit<Props, 'selectedId'> & { node: SceneNode }) {
+function Detail({ analysis, scene, taxonomy, node, onSelect }: Omit<Props, 'selectedId' | 'onEdit'> & { node: SceneNode }) {
   const finding = analysis.findings.find((f) => f.id === node.id)
   const skill = taxonomy.byId.get(node.id)
   const category = taxonomy.categories.find((c) => c.id === node.cat)?.name ?? node.cat
   const status = statusOf(node)
   const buildsOn = (skill?.pre ?? []).map((id) => scene.byId.get(id)).filter((n) => n !== undefined)
-  const unlocks = scene.edges
+  const leadsTo = scene.edges
     .filter((e) => e.from === node.id)
     .map((e) => scene.byId.get(e.to))
     .filter((n) => n !== undefined)
-  const hasQuotes = (finding?.postingQuotes.length ?? 0) + (finding?.resumeQuotes.length ?? 0) > 0
+  const required = finding?.required ?? 0
+  const preferred = finding?.preferred ?? 0
+  const position = analysis.learningOrder.indexOf(node.id)
 
   return (
     <>
@@ -117,20 +166,39 @@ function Detail({ analysis, scene, taxonomy, node, onSelect }: Omit<Props, 'sele
         {node.next && <span className="status__next"> · Learn next</span>}
       </p>
 
-      {node.demand > 0 ? (
+      {finding?.impliedBy && (
         <p>
-          Asked for by <strong>{node.demand} of {analysis.postings.length}</strong> postings:{' '}
-          {finding?.required ?? 0} required, {finding?.preferred ?? 0} preferred.
+          Your resume does not name this, but it shows {listOf(finding.impliedBy)}, which{' '}
+          {finding.impliedBy.length === 1 ? 'builds' : 'build'} on it.
         </p>
+      )}
+
+      {node.demand > 0 ? (
+        <>
+          <p>
+            Asked for by <strong>{node.demand} of {analysis.postings.length}</strong> postings.
+          </p>
+          {/* The arithmetic, written out so it can be checked. */}
+          <p className="sum">
+            <span>Demand score</span>
+            <span>
+              {required} required × {REQUIRED_WEIGHT} + {preferred} preferred × {PREFERRED_WEIGHT} ={' '}
+              <strong>{demandScore({ required, preferred })}</strong>
+            </span>
+          </p>
+        </>
       ) : (
         <p>No posting asks for this directly. It is on the map because other skills build on it.</p>
       )}
 
+      {position >= 0 && (
+        <p className="muted">
+          Step {position + 1} of {analysis.learningOrder.length} in your learning order.
+        </p>
+      )}
+
       <Quotes title="From the postings" quotes={finding?.postingQuotes ?? []} />
       <Quotes title="From your resume" quotes={finding?.resumeQuotes ?? []} />
-      {!hasQuotes && node.demand > 0 && (
-        <p className="muted">No quotes were written for this skill in the sample data.</p>
-      )}
 
       {buildsOn.length > 0 && (
         <section>
@@ -140,11 +208,11 @@ function Detail({ analysis, scene, taxonomy, node, onSelect }: Omit<Props, 'sele
           </div>
         </section>
       )}
-      {unlocks.length > 0 && (
+      {leadsTo.length > 0 && (
         <section>
           <h3>Leads to</h3>
           <div className="chips">
-            {unlocks.map((n) => <SkillChip key={n.id} node={n} onSelect={onSelect} />)}
+            {leadsTo.map((n) => <SkillChip key={n.id} node={n} onSelect={onSelect} />)}
           </div>
         </section>
       )}
