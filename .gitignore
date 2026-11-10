@@ -1,0 +1,13 @@
+node_modules
+dist
+*.local
+*.log
+.DS_Store
+
+# Keys never go in the repo. .dev.vars is Cloudflare's local secrets file.
+.env
+.env.*
+.dev.vars
+
+# Real job postings are copyrighted and stay on this machine only.
+evals/private/

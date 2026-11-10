@@ -1,0 +1,447 @@
+/* Colours live here as variables. The canvas reads the same ones (see
+   readTheme in MapCanvas.tsx), so the map and the panel can never disagree. */
+:root {
+  color-scheme: dark;
+  --bg: #0a0e13;
+  --surface: #121922;
+  --raised: #18212c;
+  --line: #2a3747;
+  --text: #e8eef4;
+  --muted: #93a1b2;
+  --have: #f3b94d;
+  --have-ink: #2a1c00;
+  --next: #58d6c7;
+  --gap: #70808f;
+  --map-glow: 16;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --bg: #f5f3ee;
+    --surface: #fffefb;
+    --raised: #ffffff;
+    --line: #d5cfc3;
+    --text: #1b222c;
+    --muted: #56606e;
+    --have: #e2a11a;
+    --have-ink: #2a1c00;
+    --next: #08796f;
+    --gap: #77818d;
+    --map-glow: 0;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 var(--font);
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd,
+blockquote {
+  margin: 0;
+  padding: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--next);
+  outline-offset: 2px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- page frame ---------- */
+
+.app {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100%;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.top__title {
+  min-width: 0;
+  margin-right: auto;
+}
+
+.top h1 {
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.top__title p {
+  color: var(--muted);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top__stats {
+  display: flex;
+  gap: 28px;
+}
+
+.top__stats dt {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.top__stats dd {
+  font-size: 20px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.top__stats dd span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.badge {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  min-height: 0;
+}
+
+/* ---------- map ---------- */
+
+.map {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.map__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  /* Let a finger drag the map instead of scrolling the page. */
+  touch-action: none;
+}
+
+.map__canvas:active {
+  cursor: grabbing;
+}
+
+.map__controls {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  gap: 6px;
+}
+
+.map__controls button {
+  min-width: 40px;
+  height: 40px;
+  padding: 0 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.map__controls .map__text-button {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* The 3D button looks pressed in while the tilted view is on. */
+.map__controls button[aria-pressed='true'] {
+  border-color: var(--next);
+  color: var(--next);
+}
+
+.map__hint {
+  position: absolute;
+  right: 16px;
+  bottom: 20px;
+  color: var(--muted);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.map__controls button:hover {
+  background: var(--raised);
+  border-color: var(--gap);
+}
+
+/* ---------- side panel ---------- */
+
+.panel {
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.panel__body {
+  display: grid;
+  gap: 22px;
+  padding: 22px 20px 28px;
+}
+
+.panel section {
+  display: grid;
+  gap: 10px;
+}
+
+.panel h2 {
+  font-size: 20px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.panel h3,
+.eyebrow {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detail__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quiet {
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+.quiet:hover {
+  color: var(--text);
+  border-color: var(--gap);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.status__next {
+  color: var(--next);
+}
+
+.swatch {
+  display: inline-block;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--gap);
+}
+
+.swatch--have {
+  background: var(--have);
+  border-color: var(--have);
+}
+
+.swatch--next {
+  border-color: var(--next);
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--next);
+}
+
+.swatch--stone {
+  width: 10px;
+  height: 10px;
+  margin: 0 2px;
+  border: 1.5px dashed var(--gap);
+}
+
+.legend {
+  display: grid;
+  gap: 8px;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.next-list {
+  display: grid;
+  gap: 8px;
+}
+
+.next-list button {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--next);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.next-list button:hover {
+  border-color: var(--next);
+}
+
+.next-list__name {
+  font-weight: 600;
+}
+
+.next-list .muted {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.quotes {
+  display: grid;
+  gap: 10px;
+}
+
+.quotes li {
+  border-left: 2px solid var(--line);
+  padding-left: 12px;
+}
+
+.quotes cite {
+  color: var(--muted);
+  font-size: 13px;
+  font-style: normal;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 10px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+.chip:hover {
+  border-color: var(--gap);
+}
+
+/* ---------- phones: the panel becomes a sheet under the map ---------- */
+
+@media (max-width: 760px) {
+  .top {
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    padding: 10px 16px;
+  }
+
+  .top__title {
+    flex-basis: 100%;
+  }
+
+  .top__stats dd {
+    font-size: 17px;
+  }
+
+  .stage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 44%);
+  }
+
+  .panel {
+    border-left: none;
+    border-top: 1px solid var(--line);
+  }
+
+  /* No room for the hint beside the buttons on a phone. */
+  .map__hint {
+    display: none;
+  }
+
+  .panel__body {
+    padding: 16px 16px 24px;
+    gap: 18px;
+  }
+}
