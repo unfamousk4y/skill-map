@@ -69,6 +69,8 @@ export type SkillFinding = {
   impliedBy?: string[]
   /** Set when the person marked the skill as learned after the resume was written. */
   learned?: Proof
+  /** True when the student added this skill by hand during review, for at least one document. */
+  addedByYou?: boolean
   postingQuotes: Quote[]
   resumeQuotes: Quote[]
 }
@@ -82,6 +84,11 @@ export type Mention = {
   quote: string
   /** Postings only: is the skill a must-have or a nice-to-have? */
   level: 'required' | 'preferred'
+  /**
+   * True when the student added the skill themselves while reviewing. There
+   * is no quote then: the quote is an empty string and is never shown.
+   */
+  manual?: boolean
 }
 
 export type Analysis = {

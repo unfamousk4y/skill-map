@@ -54,15 +54,23 @@ export function buildAnalysis(input: AnalysisInput, tax: Taxonomy): Analysis {
       const required = group.find((m) => m.level === 'required')
       if (required) f.required++
       else f.preferred++
-      // One quote per posting: the one that decided its level.
-      f.postingQuotes.push({ source: posting.title, text: (required ?? group[0]!).quote })
+      // One quote per posting: the one that decided its level. A skill the
+      // student added by hand has no quote to show.
+      const chosen = required ?? group[0]!
+      if (chosen.quote !== '') f.postingQuotes.push({ source: posting.title, text: chosen.quote })
+      if (group.some((m) => m.manual)) f.addedByYou = true
     }
   }
 
+  /** Skills the resume shows directly, by quote or by the student's own word. */
+  const direct = new Set<string>()
   for (const m of input.resume) {
     if (!tax.byId.has(m.skillId)) continue
     const f = finding(m.skillId)
     f.have = true
+    direct.add(m.skillId)
+    if (m.manual) f.addedByYou = true
+    if (m.quote === '') continue
     const quote: Quote = { source: 'Resume', text: m.quote }
     if (f.resumeQuotes.length < MAX_RESUME_QUOTES && !f.resumeQuotes.some((q) => q.text === quote.text)) {
       f.resumeQuotes.push(quote)
@@ -75,7 +83,7 @@ export function buildAnalysis(input: AnalysisInput, tax: Taxonomy): Analysis {
   for (const id of shown) {
     for (const pre of allPrerequisites(tax, id)) {
       const f = finding(pre)
-      if (f.resumeQuotes.length > 0) continue // named directly: no need to imply it
+      if (direct.has(pre)) continue // shown directly: no need to imply it
       f.have = true
       const name = tax.byId.get(id)!.name
       f.impliedBy = [...(f.impliedBy ?? []), name].sort()

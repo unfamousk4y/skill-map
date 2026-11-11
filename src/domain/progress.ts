@@ -73,7 +73,8 @@ export function applyLearned(analysis: Analysis, learned: Learned, tax: Taxonomy
     if (!findings.get(id)?.learned) continue
     for (const pre of allPrerequisites(tax, id)) {
       const f = finding(pre)
-      if (f.resumeQuotes.length > 0 || f.learned) continue
+      // Already known first-hand (resume or learned): nothing to imply.
+      if (f.learned || (f.have && !f.impliedBy)) continue
       f.have = true
       const name = tax.byId.get(id)!.name
       f.impliedBy = [...new Set([...(f.impliedBy ?? []), name])].sort()

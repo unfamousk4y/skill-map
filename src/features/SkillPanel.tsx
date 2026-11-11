@@ -251,6 +251,10 @@ function Detail({
         </p>
       )}
 
+      {finding?.addedByYou && (
+        <p className="muted">You added this yourself when reviewing the keywords, so not every count has a quote.</p>
+      )}
+
       {node.demand > 0 ? (
         <>
           <p>

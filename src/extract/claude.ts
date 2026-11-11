@@ -8,11 +8,11 @@
 //   one document is read by the free matcher instead, and the result says so.
 
 import { findMentions } from '../domain/matcher.ts'
-import { buildAnalysis } from '../domain/score.ts'
 import type { Analysis, Mention, Taxonomy } from '../domain/types.ts'
 import { verifyMentions } from '../domain/verify.ts'
 import type { DocumentKind, ExtractError, ExtractReply } from './claudeFormat.ts'
 import { prepare, type TextInputs } from './dictionary.ts'
+import { analysisFromExtraction, type Extraction } from './extraction.ts'
 
 /** Sends one document to the server. Swapped for a fake in tests. */
 export type Post = (body: { kind: DocumentKind; text: string }) => Promise<ExtractReply | ExtractError>
@@ -34,12 +34,13 @@ export class ClaudeUnavailable extends Error {}
 
 export type Progress = { done: number; total: number; current: string }
 
-export async function analyseWithClaude(
+/** Reads every document with Claude. Nothing is counted yet. */
+export async function extractWithClaude(
   inputs: TextInputs,
   tax: Taxonomy,
   post: Post = postToServer,
   onProgress: (progress: Progress) => void = () => {},
-): Promise<Analysis> {
+): Promise<Extraction> {
   const prepared = prepare(inputs)
   const documents: { kind: DocumentKind; name: string; text: string }[] = [
     ...prepared.postings.map(({ posting, text }) => ({ kind: 'posting' as const, name: posting.title, text })),
@@ -80,17 +81,26 @@ export async function analyseWithClaude(
   }
   onProgress({ done: documents.length, total: documents.length, current: '' })
 
-  return buildAnalysis(
-    {
-      label: inputs.label,
-      fictional: inputs.fictional,
-      method: 'claude',
-      postings: prepared.postings.map(({ posting }, index) => ({ posting, mentions: results[index] ?? [] })),
-      resume: results[prepared.postings.length] ?? [],
-      rejectedMentions: rejected,
-      otherSkills: [...otherSkills].sort((a, b) => a.localeCompare(b)),
-      notes,
-    },
-    tax,
-  )
+  return {
+    method: 'claude',
+    documents: documents.map((doc, index) => ({
+      kind: doc.kind,
+      title: doc.name,
+      text: doc.text,
+      mentions: (results[index] ?? []).map(({ skillId, quote, level }) => ({ skillId, quote, level })),
+    })),
+    rejectedMentions: rejected,
+    otherSkills: [...otherSkills].sort((a, b) => a.localeCompare(b)),
+    notes,
+  }
+}
+
+/** The whole Claude pipeline with no review step. Used in tests and the smoke script. */
+export async function analyseWithClaude(
+  inputs: TextInputs,
+  tax: Taxonomy,
+  post: Post = postToServer,
+  onProgress: (progress: Progress) => void = () => {},
+): Promise<Analysis> {
+  return analysisFromExtraction(await extractWithClaude(inputs, tax, post, onProgress), {}, inputs, tax)
 }

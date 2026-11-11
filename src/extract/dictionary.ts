@@ -5,9 +5,9 @@
 // and score steps are exactly the same for both.
 
 import { findMentions } from '../domain/matcher.ts'
-import { buildAnalysis } from '../domain/score.ts'
-import type { Analysis, Posting, Taxonomy } from '../domain/types.ts'
+import type { Analysis, Mention, Posting, Taxonomy } from '../domain/types.ts'
 import { verifyMentions } from '../domain/verify.ts'
+import { analysisFromExtraction, type Extraction } from './extraction.ts'
 
 export type TextInputs = {
   label: string
@@ -42,23 +42,36 @@ export function prepare(inputs: TextInputs): PreparedInputs {
   }
 }
 
-export function analyseWithDictionary(inputs: TextInputs, tax: Taxonomy): Analysis {
+/** Reads every document with the free matcher. Nothing is counted yet. */
+export function extractWithDictionary(inputs: TextInputs, tax: Taxonomy): Extraction {
   let rejected = 0
-  const check = (text: string) => {
+  const check = (text: string): Mention[] => {
     const result = verifyMentions(text, findMentions(text, tax), tax)
     rejected += result.rejected.length
-    return result.kept
+    // Keep only what a mention is: the matcher's positions are not needed later.
+    return result.kept.map(({ skillId, quote, level }) => ({ skillId, quote, level }))
   }
   const prepared = prepare(inputs)
-  return buildAnalysis(
-    {
-      label: inputs.label,
-      fictional: inputs.fictional,
-      method: 'dictionary',
-      postings: prepared.postings.map(({ posting, text }) => ({ posting, mentions: check(text) })),
-      resume: check(prepared.resume),
-      rejectedMentions: rejected,
-    },
-    tax,
-  )
+  return {
+    method: 'dictionary',
+    documents: [
+      ...prepared.postings.map(({ posting, text }) => ({
+        kind: 'posting' as const,
+        title: posting.title,
+        text,
+        mentions: check(text),
+      })),
+      ...(prepared.resume.trim() !== ''
+        ? [{ kind: 'resume' as const, title: 'Resume', text: prepared.resume, mentions: check(prepared.resume) }]
+        : []),
+    ],
+    rejectedMentions: rejected,
+    otherSkills: [],
+    notes: [],
+  }
+}
+
+/** The whole free pipeline with no review step. Used for the built-in sample and in tests. */
+export function analyseWithDictionary(inputs: TextInputs, tax: Taxonomy): Analysis {
+  return analysisFromExtraction(extractWithDictionary(inputs, tax), {}, inputs, tax)
 }

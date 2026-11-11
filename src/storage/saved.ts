@@ -5,8 +5,10 @@
 // have the expected shape it is ignored, and the app starts fresh.
 
 import { validProofUrl } from '../domain/progress.ts'
-import type { Analysis, Learned, Snapshot, SnapshotSkill } from '../domain/types.ts'
+import type { DocCorrections } from '../domain/review.ts'
+import type { Learned, Mention, Snapshot, SnapshotSkill } from '../domain/types.ts'
 import { MAX_CHARS, MAX_POSTINGS } from '../extract/dictionary.ts'
+import type { Corrections, DocumentReading, Extraction } from '../extract/extraction.ts'
 
 export const SAVED_VERSION = 1
 export const MAX_SNAPSHOTS = 20
@@ -17,10 +19,12 @@ export type SavedState = {
   draft: { postings: string[]; resume: string }
   method: 'dictionary' | 'claude'
   /**
-   * Kept only for a map Claude read, because reading it again would cost
-   * money. A free-matcher map is rebuilt from the text each time instead.
+   * What Claude found, kept because reading the text again would cost money.
+   * Null for the free matcher, which re-reads the text each time instead.
    */
-  claudeAnalysis: Analysis | null
+  claudeExtraction: Extraction | null
+  /** What the student changed while reviewing, by document. */
+  corrections: Corrections
   learned: Learned
   /** Oldest first. */
   snapshots: Snapshot[]
@@ -42,22 +46,54 @@ function parseSnapshot(value: unknown): Snapshot | null {
   return { at: value.at, postings: value.postings, skills }
 }
 
-/** A light check: enough to know the map can be drawn from it without crashing. */
-function looksLikeAnalysis(value: unknown): value is Analysis {
-  if (!isObject(value)) return false
-  const lists = ['postings', 'findings', 'next', 'learningOrder', 'otherSkills', 'notes'] as const
-  if (!lists.every((key) => Array.isArray(value[key]))) return false
-  if (!isObject(value.unlocks) || typeof value.label !== 'string') return false
-  return (value.findings as unknown[]).every(
-    (f) =>
-      isObject(f) &&
-      typeof f.id === 'string' &&
-      isCount(f.required) &&
-      isCount(f.preferred) &&
-      typeof f.have === 'boolean' &&
-      Array.isArray(f.postingQuotes) &&
-      Array.isArray(f.resumeQuotes),
-  )
+const isLevel = (v: unknown): v is Mention['level'] => v === 'required' || v === 'preferred'
+const isTextList = (v: unknown, max: number): v is string[] => Array.isArray(v) && v.every((x) => isText(x, max))
+
+function parseExtraction(value: unknown): Extraction | null {
+  if (!isObject(value) || !Array.isArray(value.documents) || value.documents.length > MAX_POSTINGS + 1) return null
+  if (!isCount(value.rejectedMentions) || !isTextList(value.otherSkills, 200) || !isTextList(value.notes, 1000)) return null
+  const documents: DocumentReading[] = []
+  for (const doc of value.documents) {
+    if (!isObject(doc) || (doc.kind !== 'posting' && doc.kind !== 'resume')) return null
+    if (!isText(doc.title, 200) || !isText(doc.text, MAX_CHARS) || !Array.isArray(doc.mentions)) return null
+    const mentions: Mention[] = []
+    for (const m of doc.mentions) {
+      if (!isObject(m) || !isText(m.skillId, 60) || !isText(m.quote, MAX_CHARS) || !isLevel(m.level)) return null
+      // Saved findings are shown as quotes, so each must still be in its text.
+      const squash = (text: string) => text.replace(/\s+/g, ' ').trim()
+      if (m.quote === '' || !squash(doc.text).includes(squash(m.quote))) return null
+      mentions.push({ skillId: m.skillId, quote: m.quote, level: m.level })
+    }
+    documents.push({ kind: doc.kind, title: doc.title, text: doc.text, mentions })
+  }
+  return {
+    method: 'claude',
+    documents,
+    rejectedMentions: value.rejectedMentions,
+    otherSkills: value.otherSkills,
+    notes: value.notes,
+  }
+}
+
+function parseCorrections(value: unknown): Corrections | null {
+  // Saved before the review step existed: no corrections.
+  if (value === undefined) return {}
+  if (!isObject(value)) return null
+  const out: Corrections = {}
+  for (const [key, c] of Object.entries(value)) {
+    if (!isObject(c) || !isTextList(c.removed, 60) || !Array.isArray(c.added) || !isObject(c.levels)) return null
+    const doc: DocCorrections = { removed: c.removed, added: [], levels: {} }
+    for (const a of c.added) {
+      if (!isObject(a) || !isText(a.skillId, 60) || !isLevel(a.level)) return null
+      doc.added.push({ skillId: a.skillId, level: a.level })
+    }
+    for (const [id, level] of Object.entries(c.levels)) {
+      if (!isLevel(level)) return null
+      doc.levels[id] = level
+    }
+    out[key] = doc
+  }
+  return out
 }
 
 export function parseSaved(value: unknown): SavedState | null {
@@ -86,13 +122,17 @@ export function parseSaved(value: unknown): SavedState | null {
     snapshots.push(snapshot)
   }
 
-  const claudeAnalysis = looksLikeAnalysis(value.claudeAnalysis) ? value.claudeAnalysis : null
+  const corrections = parseCorrections(value.corrections)
+  if (corrections === null) return null
+
+  const claudeExtraction = value.method === 'claude' ? parseExtraction(value.claudeExtraction) : null
   return {
     version: SAVED_VERSION,
     draft: { postings: draft.postings as string[], resume: draft.resume as string },
     // Without the saved Claude result, fall back to the free matcher rather than show nothing.
-    method: value.method === 'claude' && claudeAnalysis ? 'claude' : 'dictionary',
-    claudeAnalysis: value.method === 'claude' ? claudeAnalysis : null,
+    method: claudeExtraction ? 'claude' : 'dictionary',
+    claudeExtraction,
+    corrections,
     learned,
     snapshots,
   }

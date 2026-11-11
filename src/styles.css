@@ -998,3 +998,244 @@ button {
   margin: 48px auto;
   padding: 0 20px;
 }
+
+/* ---------- review step: "keywords found, are they right?" ---------- */
+
+.review {
+  display: grid;
+  gap: 18px;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 24px 20px 32px;
+}
+
+.review__head {
+  display: grid;
+  gap: 8px;
+  max-width: 70ch;
+}
+
+.review h2 {
+  font-size: 22px;
+  font-weight: 650;
+}
+
+.review h3 {
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.review__score {
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.review__docs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.review__docs button {
+  display: grid;
+  gap: 2px;
+  flex: 0 0 auto;
+  max-width: 240px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  text-align: left;
+}
+
+.review__docs button[aria-current] {
+  border-color: var(--next);
+  box-shadow: inset 0 -2px 0 var(--next);
+}
+
+.review__doc-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.review__text,
+.review__skills {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.review__text {
+  max-height: 68vh;
+  overflow-y: auto;
+}
+
+/* The pasted text exactly as it was, line breaks included. */
+.review__source {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+
+.review__source mark {
+  background: color-mix(in srgb, var(--next) 28%, transparent);
+  border-bottom: 2px solid var(--next);
+  border-radius: 3px;
+  color: inherit;
+  padding: 1px 2px;
+}
+
+.review__source mark.is-active {
+  background: color-mix(in srgb, var(--have) 55%, transparent);
+  border-bottom-color: var(--have);
+}
+
+.review__source mark.is-removed {
+  background: none;
+  border-bottom: 2px dotted var(--gap);
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.review__skills ul {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+}
+
+.review__skills li {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.review__skills li.is-removed .review__name {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.review__row-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.review__name {
+  font-weight: 600;
+}
+
+.review__why {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.review__row-actions,
+.review__add-row,
+.review__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.confidence {
+  flex: 0 0 auto;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  padding: 1px 8px;
+  text-transform: uppercase;
+}
+
+.confidence--high,
+.confidence--yours {
+  color: var(--next);
+}
+
+.confidence--medium {
+  color: var(--have);
+}
+
+.confidence--low {
+  color: var(--danger);
+}
+
+@media (prefers-color-scheme: light) {
+  /* The amber is too pale to read as text on a light page. */
+  .confidence--medium {
+    color: #8a5a00;
+  }
+}
+
+.review select,
+.review input {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 8px;
+}
+
+.review__add {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.review__add label {
+  font-weight: 600;
+}
+
+.review__add input {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.review__actions .primary {
+  margin-left: auto;
+}
+
+@media (max-width: 760px) {
+  .review {
+    padding: 16px 16px 24px;
+  }
+
+  .review__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .review__text {
+    max-height: 40vh;
+  }
+
+  .review__actions .primary {
+    margin-left: 0;
+    width: 100%;
+  }
+}

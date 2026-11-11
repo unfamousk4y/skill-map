@@ -4,12 +4,14 @@ import { analysisFromSnapshot, applyLearned, snapshotOf } from './domain/progres
 import { decodeShare, encodeShare, SHARE_PREFIX, shareFromHash } from './domain/share.ts'
 import { taxonomy } from './domain/taxonomy.ts'
 import type { Analysis, Learned, Snapshot } from './domain/types.ts'
-import { analyseWithClaude, ClaudeUnavailable, type Progress } from './extract/claude.ts'
-import { analyseWithDictionary } from './extract/dictionary.ts'
+import { ClaudeUnavailable, extractWithClaude, type Progress } from './extract/claude.ts'
+import { analyseWithDictionary, extractWithDictionary } from './extract/dictionary.ts'
+import { analysisFromExtraction, docKey, type Corrections, type Extraction } from './extract/extraction.ts'
 import { BenchScreen } from './features/BenchScreen.tsx'
 import { IntakeScreen, type Draft, type Method } from './features/IntakeScreen.tsx'
 import { ListView } from './features/ListView.tsx'
 import { ProgressPanel } from './features/ProgressPanel.tsx'
+import { ReviewScreen } from './features/ReviewScreen.tsx'
 import { SkillPanel } from './features/SkillPanel.tsx'
 import { MapCanvas } from './map/MapCanvas.tsx'
 import { buildScene } from './map/scene.ts'
@@ -41,8 +43,8 @@ async function claudeIsAvailable(): Promise<boolean> {
 type Own = {
   draft: Draft
   method: Method
-  /** The analysis before any "learned" marks are applied. */
-  base: Analysis
+  /** What the extractor found in each document, before the student's corrections. */
+  extraction: Extraction
   /** Goes up with each build, so the map replays its opening animation. */
   build: number
 }
@@ -58,6 +60,8 @@ function readShareLink(): Analysis | 'damaged' | null {
   const snapshot = decodeShare(text, taxonomy)
   return snapshot ? analysisFromSnapshot(snapshot, 'Shared map', taxonomy) : 'damaged'
 }
+
+const OWN_LABEL = { label: 'Your postings and resume', fictional: false }
 
 const SAVE_FAILED =
   'This browser would not save your data, so it will be gone when you close the page. Private windows often block saving.'
@@ -75,6 +79,12 @@ function SkillMapApp() {
   const [shared, setShared] = useState(readShareLink)
   /** True when the person chose to look at the sample although they have their own map. */
   const [showingSample, setShowingSample] = useState(false)
+  /** What the student changed when reviewing the keywords, by document. */
+  const [corrections, setCorrections] = useState<Corrections>({})
+  /** Set while the "keywords found, are they right?" step is on screen. */
+  const [review, setReview] = useState<{ draft: Draft; method: Method; extraction: Extraction } | null>(null)
+  /** Text that was read but whose review was not finished, so "back" does not lose it. */
+  const [pendingDraft, setPendingDraft] = useState<Draft | null>(null)
   const [editing, setEditing] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [view, setView] = useState<'map' | 'list'>('map')
@@ -89,7 +99,16 @@ function SkillMapApp() {
     [],
   )
   // Learned marks are laid over the saved analysis each time, never baked into it.
-  const ownAnalysis = useMemo(() => (own ? applyLearned(own.base, learned, taxonomy) : null), [own, learned])
+  // Built in layers, each time from what the extractor found: first the
+  // student's corrections, then the skills marked as learned. Neither layer
+  // changes the one under it, so both can be undone.
+  const ownAnalysis = useMemo(
+    () =>
+      own
+        ? applyLearned(analysisFromExtraction(own.extraction, corrections, OWN_LABEL, taxonomy), learned, taxonomy)
+        : null,
+    [own, corrections, learned],
+  )
   const sharedAnalysis = shared !== null && shared !== 'damaged' ? shared : null
   const mode: 'own' | 'sample' | 'shared' = sharedAnalysis ? 'shared' : ownAnalysis && !showingSample ? 'own' : 'sample'
   const analysis = sharedAnalysis ?? (mode === 'own' ? ownAnalysis! : sampleAnalysis)
@@ -101,10 +120,10 @@ function SkillMapApp() {
     loadSaved()
       .then((saved) => {
         if (cancelled || !saved) return
-        const base =
-          saved.claudeAnalysis ??
-          analyseWithDictionary({ label: 'Your postings and resume', fictional: false, ...saved.draft }, taxonomy)
-        setOwn({ draft: saved.draft, method: saved.method, base, build: 1 })
+        // The free matcher simply reads the text again. Claude's findings were saved.
+        const extraction = saved.claudeExtraction ?? extractWithDictionary({ ...OWN_LABEL, ...saved.draft }, taxonomy)
+        setOwn({ draft: saved.draft, method: saved.method, extraction, build: 1 })
+        setCorrections(saved.corrections)
         setLearned(saved.learned)
         setSnapshots(saved.snapshots)
       })
@@ -125,14 +144,15 @@ function SkillMapApp() {
       version: SAVED_VERSION,
       draft: own.draft,
       method: own.method,
-      claudeAnalysis: own.method === 'claude' ? own.base : null,
+      claudeExtraction: own.method === 'claude' ? own.extraction : null,
+      corrections,
       learned,
       snapshots,
     }
     writeSaved(state)
       .then(() => setSaveProblem(null))
       .catch(() => setSaveProblem(SAVE_FAILED))
-  }, [loaded, own, learned, snapshots])
+  }, [loaded, own, corrections, learned, snapshots])
 
   // Pasting a different share link into the same tab changes only the "#" part,
   // which does not reload the page by itself.
@@ -162,23 +182,19 @@ function SkillMapApp() {
   const covered = asked.filter((n) => n.have).length
 
   const build = async (draft: Draft, method: Method) => {
-    const inputs = { label: 'Your postings and resume', fictional: false, ...draft }
-    const show = (result: Analysis) => {
-      setOwn((previous) => ({ draft, method, base: result, build: (previous?.build ?? 0) + 1 }))
-      setShowingSample(false)
-      setSelectedId(null)
-      setEditing(false)
-    }
+    const inputs = { ...OWN_LABEL, ...draft }
+    // Reading the text does not build the map yet: the student checks the findings first.
+    const show = (extraction: Extraction) => setReview({ draft, method, extraction })
     setBuildError(null)
 
     if (method === 'dictionary') {
-      show(analyseWithDictionary(inputs, taxonomy))
+      show(extractWithDictionary(inputs, taxonomy))
       return
     }
 
     setProgress({ done: 0, total: 0, current: '' })
     try {
-      show(await analyseWithClaude(inputs, taxonomy, undefined, setProgress))
+      show(await extractWithClaude(inputs, taxonomy, undefined, setProgress))
     } catch (error) {
       // The form stays open with the person's text untouched, so nothing is lost.
       setBuildError(
@@ -189,6 +205,26 @@ function SkillMapApp() {
     } finally {
       setProgress(null)
     }
+  }
+
+  /** The student is happy with the keywords: build the map from them. */
+  const confirmReview = (reviewed: Corrections) => {
+    if (!review) return
+    const { draft, method, extraction } = review
+    // Keep corrections only for documents that are still part of the map.
+    const keys = new Set(extraction.documents.map(docKey))
+    setCorrections(Object.fromEntries(Object.entries(reviewed).filter(([key]) => keys.has(key))))
+    setOwn((previous) => ({ draft, method, extraction, build: (previous?.build ?? 0) + 1 }))
+    setShowingSample(false)
+    setSelectedId(null)
+    setEditing(false)
+    setReview(null)
+    setPendingDraft(null)
+  }
+
+  /** Opens the review step again for the map on screen. Reads nothing again, so it is free. */
+  const reviewAgain = () => {
+    if (own) setReview({ draft: own.draft, method: own.method, extraction: own.extraction })
   }
 
   const toggleSample = () => {
@@ -226,6 +262,7 @@ function SkillMapApp() {
 
   const deleteAll = () => {
     setOwn(null)
+    setCorrections({})
     setLearned({})
     setSnapshots([])
     setSelectedId(null)
@@ -269,7 +306,7 @@ function SkillMapApp() {
             {analysis.method === 'claude' && ' · read by Claude'}
           </p>
         </div>
-        {!editing && (
+        {!editing && !review && (
           <>
             <dl className="top__stats">
               <div>
@@ -306,6 +343,11 @@ function SkillMapApp() {
                       {showingSample ? 'Back to my map' : 'Show the sample'}
                     </button>
                   )}
+                  {mode === 'own' && (
+                    <button type="button" className="quiet" onClick={reviewAgain}>
+                      Review keywords
+                    </button>
+                  )}
                   <button type="button" className="primary" onClick={openEditor}>
                     {own ? 'Edit my text' : 'Use my own postings'}
                   </button>
@@ -316,15 +358,33 @@ function SkillMapApp() {
         )}
       </header>
 
-      {editing ? (
+      {review ? (
+        <main className="stage stage--single">
+          <ReviewScreen
+            extraction={review.extraction}
+            initial={corrections}
+            taxonomy={taxonomy}
+            onConfirm={confirmReview}
+            onBack={() => {
+              // Back to the form, with the text that was just read still in it.
+              setPendingDraft(review.draft)
+              setReview(null)
+              openEditor()
+            }}
+          />
+        </main>
+      ) : editing ? (
         <main className="stage stage--single">
           <IntakeScreen
-            initial={own?.draft ?? { postings: [''], resume: '' }}
+            initial={pendingDraft ?? own?.draft ?? { postings: [''], resume: '' }}
             claudeAvailable={claudeAvailable}
             progress={progress}
             serverError={buildError}
             onBuild={build}
-            onCancel={() => setEditing(false)}
+            onCancel={() => {
+              setPendingDraft(null)
+              setEditing(false)
+            }}
           />
         </main>
       ) : !loaded && mode === 'sample' ? (

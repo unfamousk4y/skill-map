@@ -5,7 +5,8 @@ const good: SavedState = {
   version: 1,
   draft: { postings: ['Requirements: Python'], resume: 'Python' },
   method: 'dictionary',
-  claudeAnalysis: null,
+  claudeExtraction: null,
+  corrections: { 'posting-20-abc': { removed: ['go'], added: [{ skillId: 'docker', level: 'preferred' }], levels: { python: 'preferred' } } },
   learned: { docker: { url: 'https://github.com/me/project', at: '2026-11-10T12:00:00.000Z' } },
   snapshots: [
     { at: '2026-11-10T12:00:00.000Z', postings: 1, skills: { python: { required: 1, preferred: 0, state: 'have' } } },
@@ -56,6 +57,40 @@ describe('parseSaved', () => {
   it('falls back to the free matcher when a Claude map was saved without its result', () => {
     const parsed = parseSaved(copy((v) => (v.method = 'claude')))!
     expect(parsed.method).toBe('dictionary')
-    expect(parsed.claudeAnalysis).toBeNull()
+    expect(parsed.claudeExtraction).toBeNull()
+  })
+
+  const claudeSave = (quote: string) =>
+    copy((v) => {
+      v.method = 'claude'
+      v.claudeExtraction = {
+        method: 'claude',
+        documents: [
+          { kind: 'posting', title: 'A job', text: 'Requirements: Python', mentions: [{ skillId: 'python', quote, level: 'required' }] },
+        ],
+        rejectedMentions: 0,
+        otherSkills: [],
+        notes: [],
+      }
+    })
+
+  it('keeps what Claude found, so the text is not read (and paid for) again', () => {
+    const parsed = parseSaved(claudeSave('Requirements: Python'))!
+    expect(parsed.method).toBe('claude')
+    expect(parsed.claudeExtraction!.documents[0]!.mentions).toHaveLength(1)
+  })
+
+  it('drops a saved Claude result whose quote is not in its text', () => {
+    const parsed = parseSaved(claudeSave('Ten years of Rust'))!
+    expect(parsed.method).toBe('dictionary')
+    expect(parsed.claudeExtraction).toBeNull()
+  })
+
+  it('reads data saved before the review step existed', () => {
+    expect(parseSaved(copy((v) => delete v.corrections))!.corrections).toEqual({})
+  })
+
+  it('ignores saved data with a correction to a level that does not exist', () => {
+    expect(parseSaved(copy((v) => (v.corrections = { k: { removed: [], added: [], levels: { python: 'maybe' } } })))).toBeNull()
   })
 })
