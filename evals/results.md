@@ -12,16 +12,16 @@ Generated 2026-11-11 by `node evals/run.mjs --claude`. Model `claude-haiku-5-5`,
 
 | Extractor | Precision | Recall | F1 | Described recall | Level | Perfect postings | Found | Missed | Extra |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Free matcher | 91% | 79% | 84% | 0% | 100% | 13 of 30 | 111 | 30 | 11 |
-| Claude, low effort | 99% | 99% | 99% | 96% | 100% | 27 of 30 | 139 | 2 | 2 |
-| Claude, medium effort | 99% | 99% | 99% | 92% | 100% | 28 of 30 | 139 | 2 | 1 |
+| Free matcher | 89% | 78% | 83% | 0% | 100% | 13 of 30 | 108 | 30 | 14 |
+| Claude, low effort | 97% | 99% | 98% | 96% | 100% | 26 of 30 | 137 | 1 | 4 |
+| Claude, medium effort | 97% | 99% | 98% | 92% | 100% | 26 of 30 | 136 | 2 | 4 |
 
 F1 by kind of posting:
 
 | Kind | Postings | Free matcher | Claude, low effort | Claude, medium effort |
 | --- | --- | --- | --- | --- |
 | named | 8 | 98% | 100% | 100% |
-| described | 9 | 47% | 96% | 96% |
+| described | 9 | 37% | 94% | 92% |
 | misleading | 6 | 69% | 97% | 100% |
 | levels | 5 | 98% | 100% | 100% |
 | nothing | 2 | 0 extra | 0 extra | 0 extra |

@@ -31,7 +31,9 @@
 
 ## s14 ML Engineer Intern, Cobalt Vision
 
-- Free matcher: missed Computer vision, Fine-tuning, MLOps; extra Machine learning
+- Free matcher: missed Computer vision, Fine-tuning, MLOps; extra Machine learning, Python
+- Claude, low effort: extra Python
+- Claude, medium effort: extra Python
 
 ## s15 Data Intern, Wrenfield Insurance
 
@@ -41,8 +43,9 @@
 
 ## s16 Systems Intern, Tarn Networks
 
-- Free matcher: missed Concurrency, Computer networks, Operating systems
-- Claude, low effort: missed Rust
+- Free matcher: missed Concurrency, Computer networks, Operating systems; extra C, Rust
+- Claude, low effort: extra C
+- Claude, medium effort: extra C, Rust
 
 ## s17 Customer Success Associate, Go Bright Energy
 

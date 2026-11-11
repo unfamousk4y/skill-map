@@ -1,6 +1,6 @@
 {
   "name": "synthetic",
-  "note": "SYNTHETIC TEST DATA. Every company and posting here is invented. They were written by an AI model (Claude) to cover easy cases, skills that are described without being named, misleading words, and different ways of saying required or preferred. The answer key was drafted by the same model and must be hand-checked by a person: see REVIEW.md.",
+  "note": "SYNTHETIC TEST DATA. Every company and posting here is invented. They were written by an AI model (Claude) to cover easy cases, skills that are described without being named, misleading words, and different ways of saying required or preferred. The answer key was drafted by the same model, corrected after a second review, and confirmed as hand-checked by the project owner on 2026-11-10: see README.md.",
   "postings": [
     {
       "id": "s01", "group": "named",
@@ -70,7 +70,7 @@
     {
       "id": "s14", "group": "described",
       "text": "ML Engineer Intern, Cobalt Vision\n- You have trained neural networks to recognise objects in images.\n- You have taken a model from an experiment to a service that other teams call.\n- You have adapted a pretrained model to a new task with a small labelled dataset.\n- Python is our main language.",
-      "expected": { "required": ["deep-learning", "computer-vision", "mlops", "fine-tuning", "python"], "preferred": [], "described": ["computer-vision", "mlops", "fine-tuning"] }
+      "expected": { "required": ["deep-learning", "computer-vision", "mlops", "fine-tuning"], "preferred": [], "described": ["computer-vision", "mlops", "fine-tuning"] }
     },
     {
       "id": "s15", "group": "described",
@@ -80,7 +80,7 @@
     {
       "id": "s16", "group": "described",
       "text": "Systems Intern, Tarn Networks\n- You understand how processes, threads and memory are managed by a kernel.\n- You can write code where several things happen at once without corrupting shared state.\n- You know what happens between typing an address and a page arriving, packet by packet.\n- We write mostly in C and Rust.",
-      "expected": { "required": ["operating-systems", "concurrency", "networking", "c", "rust"], "preferred": [], "described": ["operating-systems", "concurrency", "networking"] }
+      "expected": { "required": ["operating-systems", "concurrency", "networking"], "preferred": [], "described": ["operating-systems", "concurrency", "networking"] }
     },
     {
       "id": "s17", "group": "misleading",

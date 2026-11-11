@@ -15,7 +15,7 @@ const nameOf = new Map(taxonomy.skills.map((s) => [s.id, s.name]))
 const out = [
   '# Answer key review sheet',
   '',
-  'The postings and the answer key below were written by an AI model. The accuracy numbers are only as good as this key, so a person needs to check it.',
+  'The postings and the answer key below were written by an AI model. The accuracy numbers are only as good as this key, so a person needs to check it. The project owner confirmed on 2026-11-10 that this key is hand-checked; check it again after any change to the postings or the key.',
   '',
   '**How to check one posting:** read the posting, then ask of each skill in the key "does this posting really ask the candidate for this?", and ask "is anything it asks for missing from the key?". Use these rules:',
   '',

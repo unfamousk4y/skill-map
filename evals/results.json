@@ -2,39 +2,39 @@
   "synthetic": {
     "matcher": {
       "postings": 30,
-      "correct": 111,
+      "correct": 108,
       "missed": 30,
-      "extra": 11,
-      "precision": 0.9098360655737705,
-      "recall": 0.7872340425531915,
-      "f1": 0.844106463878327,
+      "extra": 14,
+      "precision": 0.8852459016393442,
+      "recall": 0.782608695652174,
+      "f1": 0.8307692307692308,
       "levelAccuracy": 1,
       "describedRecall": 0,
       "perfectPostings": 13
     },
     "claude-low": {
       "postings": 30,
-      "correct": 139,
-      "missed": 2,
-      "extra": 2,
-      "precision": 0.9858156028368794,
-      "recall": 0.9858156028368794,
-      "f1": 0.9858156028368794,
+      "correct": 137,
+      "missed": 1,
+      "extra": 4,
+      "precision": 0.9716312056737588,
+      "recall": 0.9927536231884058,
+      "f1": 0.9820788530465949,
       "levelAccuracy": 1,
       "describedRecall": 0.9615384615384616,
-      "perfectPostings": 27
+      "perfectPostings": 26
     },
     "claude-medium": {
       "postings": 30,
-      "correct": 139,
+      "correct": 136,
       "missed": 2,
-      "extra": 1,
-      "precision": 0.9928571428571429,
-      "recall": 0.9858156028368794,
-      "f1": 0.9893238434163701,
+      "extra": 4,
+      "precision": 0.9714285714285714,
+      "recall": 0.9855072463768116,
+      "f1": 0.9784172661870504,
       "levelAccuracy": 1,
       "describedRecall": 0.9230769230769231,
-      "perfectPostings": 28
+      "perfectPostings": 26
     }
   },
   "real": {
