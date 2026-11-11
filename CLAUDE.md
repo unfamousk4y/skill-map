@@ -23,14 +23,14 @@ Update this section as milestones land.
 - **Milestone 3 (keyboard use, list view, phone layout, speed test): done and committed.** Accepted by the owner on screen; Claude only checked it by reading the page and sending key presses.
 - **Milestone 4 (Claude extraction): done and committed.** Real test on 2026-11-10 with `node evals/smoke.mjs`: 8 documents for $0.0032, no quotes dropped, hostile posting ignored. On the built-in sample Claude and the free matcher agree almost exactly, because the sample names every skill outright; milestone 5 needs postings that describe skills without naming them.
 - **Milestone 5 (accuracy test): done and committed.** Two test sets, which disagree: 30 synthetic postings (matcher 89% precision / 78% recall, Claude 97% / 99%, after a second reviewer's corrections to the key) and 13 real postings labelled by the owner (matcher 73% / 97%, Claude 57% / 100%). On real postings both extractors report extra skills, mostly from "Responsibilities" sections. Decision 2026-11-10: those skills count, so the real-set precision figures are not true precision (the owner's key is requirements-only); quote recall only until a person has judged the extras. The owner confirmed on 2026-11-10 that the synthetic key is hand-checked. Nothing was tuned on either set: keep it that way. Full detail and limits in `evals/README.md`.
-- **Milestones 6 (progress and sharing) and 7 (ship): not started.** Read `docs/HANDOFF.md` first: it has the current state, the open questions for the owner, and what is next.
+- **Milestone 6 (progress and sharing): built 2026-11-10, waiting for the owner to accept it.** Text, snapshots and proof links are saved in IndexedDB (`src/storage`). Rules are in `src/domain/progress.ts` and `src/domain/share.ts`. Checked by Claude through the page text only; the map redrawing after "mark as learned", the Copy link button and the downloaded file were not seen.
+- **Milestone 7 (ship): not started.** Read `docs/HANDOFF.md` first: it has the current state, the open questions for the owner, and what is next.
 - Total API spend so far: $0.0325 of the $3 limit.
 - Decision 2026-11-10: beta testers use the free matcher at no cost. Claude runs only on the owner's machine, for the demo video and the accuracy comparison. The deployed site is static files with no server, so it cannot spend API credit. There is no Cloudflare Function and `wrangler` is not installed (both were in the original plan).
 - Decision 2026-11-10: the server uses the official `@anthropic-ai/sdk` library, not plain `fetch` as the plan first said, following Anthropic's guidance. Read the Claude API reference first and give a cost estimate before any paid call.
 - Speed test: open `/?bench`. "Our code" numbers from Claude's hidden preview on 2026-11-10 (Chrome 152): 60 skills 4.7 ms, 200 skills 7.8 ms, 500 skills 16.0 ms, 1000 skills 26.7 ms per frame. The owner's visible browser on 2026-11-10: our code 0 to 1 ms at 60 skills, 1 to 2 ms at 200, 3 to 4 ms at 500, 5 to 6 ms at 1000 (that browser's clock ticks in whole milliseconds), and 6.1 ms between frames on screen at every size, which is a steady 165 frames per second on a 165 Hz screen.
 - The map is a 3D "galaxy disc" drawn with hand-written projection maths in `src/map/camera.ts` (no graphics library). The flat view is the same renderer with the camera looking straight down. 3D work was capped at half a day; do not add more 3D features without asking.
 - Not yet watched running continuously by Claude: the opening animation and the idle spin. The preview pane only paints frames on input, so the owner needs to confirm these by eye.
-- Pasted text is held in memory only and is lost on reload. Saving it in the browser is milestone 6.
 - Ask before every commit.
 
 ## Claude mode (local only)
@@ -50,6 +50,8 @@ Update this section as milestones land.
 - Every skill name and alias in `src/data/taxonomy.json` must belong to one skill only. `npm test` checks this, plus missing prerequisites and loops.
 - Colours are CSS variables in `src/styles.css`. The canvas reads the same variables, so do not hard-code colours in the renderer.
 - No account, no database. Resume text stays in the browser.
+- A share link and a snapshot hold skill ids, counts and states only. Never put pasted text, quotes or proof links in either.
+- Anything read back from storage or from a link is untrusted: it goes through `parseSaved` or `decodeShare` first. Proof links must pass `validProofUrl` (http and https only) before they are shown as a link.
 - Real job postings are copyrighted: they go in `evals/private/` (git-ignored), never in the repo.
 - Ask before: adding a dependency not in the plan, any API call that costs money (estimate first, hard stop at $3 total), `git init`, commits, deploying.
 - Checkpoints are a walkthrough of the real code at the end of each milestone. No quizzes for this project (the owner's choice, overriding the global working agreement).

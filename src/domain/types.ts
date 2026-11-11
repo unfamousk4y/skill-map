@@ -29,6 +29,30 @@ export type Taxonomy = {
 /** An exact piece of text and where it came from. */
 export type Quote = { source: string; text: string }
 
+/** A link that shows a skill was learned (a project, a certificate), and the day it was added. */
+export type Proof = { url: string; at: string }
+
+/** Skills the person marked as learned, by skill id. */
+export type Learned = Record<string, Proof>
+
+/**
+ * A small record of a map at one moment: counts and yes/no answers only,
+ * never the pasted text or any quote. Used for "what changed" and share links.
+ */
+export type Snapshot = {
+  /** When it was taken, as an ISO date-time. Empty for a shared link. */
+  at: string
+  /** Number of postings read. */
+  postings: number
+  skills: Record<string, SnapshotSkill>
+}
+
+export type SnapshotSkill = {
+  required: number
+  preferred: number
+  state: 'gap' | 'have' | 'learned'
+}
+
 /** What the analysis found out about one skill. */
 export type SkillFinding = {
   id: string
@@ -43,6 +67,8 @@ export type SkillFinding = {
    * build on it. Knowing React implies knowing JavaScript.
    */
   impliedBy?: string[]
+  /** Set when the person marked the skill as learned after the resume was written. */
+  learned?: Proof
   postingQuotes: Quote[]
   resumeQuotes: Quote[]
 }

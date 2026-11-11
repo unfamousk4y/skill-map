@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { sampleLabel, samplePostings, sampleResume } from './data/sampleTexts.ts'
+import { analysisFromSnapshot, applyLearned, snapshotOf } from './domain/progress.ts'
+import { decodeShare, encodeShare, SHARE_PREFIX, shareFromHash } from './domain/share.ts'
 import { taxonomy } from './domain/taxonomy.ts'
-import type { Analysis } from './domain/types.ts'
+import type { Analysis, Learned, Snapshot } from './domain/types.ts'
 import { analyseWithClaude, ClaudeUnavailable, type Progress } from './extract/claude.ts'
 import { analyseWithDictionary } from './extract/dictionary.ts'
 import { BenchScreen } from './features/BenchScreen.tsx'
 import { IntakeScreen, type Draft, type Method } from './features/IntakeScreen.tsx'
 import { ListView } from './features/ListView.tsx'
+import { ProgressPanel } from './features/ProgressPanel.tsx'
 import { SkillPanel } from './features/SkillPanel.tsx'
 import { MapCanvas } from './map/MapCanvas.tsx'
 import { buildScene } from './map/scene.ts'
+import { deleteSaved, loadSaved, writeSaved } from './storage/browserStore.ts'
+import { MAX_SNAPSHOTS, SAVED_VERSION, type SavedState } from './storage/saved.ts'
 
 const sample: Draft = { postings: samplePostings, resume: sampleResume }
 
@@ -32,9 +37,44 @@ async function claudeIsAvailable(): Promise<boolean> {
   }
 }
 
+/** The person's own map: their text, and what an extractor made of it. */
+type Own = {
+  draft: Draft
+  method: Method
+  /** The analysis before any "learned" marks are applied. */
+  base: Analysis
+  /** Goes up with each build, so the map replays its opening animation. */
+  build: number
+}
+
+/**
+ * A share link puts the whole map after the "#" in the address. Read once,
+ * when the page opens. "damaged" means it looked like a share link but could
+ * not be read.
+ */
+function readShareLink(): Analysis | 'damaged' | null {
+  const text = shareFromHash(window.location.hash)
+  if (text === null) return null
+  const snapshot = decodeShare(text, taxonomy)
+  return snapshot ? analysisFromSnapshot(snapshot, 'Shared map', taxonomy) : 'damaged'
+}
+
+const SAVE_FAILED =
+  'This browser would not save your data, so it will be gone when you close the page. Private windows often block saving.'
+const DELETE_FAILED =
+  "This browser would not delete the saved data. Clear this site's data in your browser settings."
+
 function SkillMapApp() {
-  // null means "showing the built-in fictional sample".
-  const [own, setOwn] = useState<{ draft: Draft; analysis: Analysis; build: number } | null>(null)
+  // null means nothing of the person's own has been built or saved yet.
+  const [own, setOwn] = useState<Own | null>(null)
+  const [learned, setLearned] = useState<Learned>({})
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([])
+  /** False until saved data has been looked for. Nothing is written before then. */
+  const [loaded, setLoaded] = useState(false)
+  const [saveProblem, setSaveProblem] = useState<string | null>(null)
+  const [shared, setShared] = useState(readShareLink)
+  /** True when the person chose to look at the sample although they have their own map. */
+  const [showingSample, setShowingSample] = useState(false)
   const [editing, setEditing] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [view, setView] = useState<'map' | 'list'>('map')
@@ -48,8 +88,59 @@ function SkillMapApp() {
     () => analyseWithDictionary({ label: sampleLabel, fictional: true, ...sample }, taxonomy),
     [],
   )
-  const analysis = own?.analysis ?? sampleAnalysis
+  // Learned marks are laid over the saved analysis each time, never baked into it.
+  const ownAnalysis = useMemo(() => (own ? applyLearned(own.base, learned, taxonomy) : null), [own, learned])
+  const sharedAnalysis = shared !== null && shared !== 'damaged' ? shared : null
+  const mode: 'own' | 'sample' | 'shared' = sharedAnalysis ? 'shared' : ownAnalysis && !showingSample ? 'own' : 'sample'
+  const analysis = sharedAnalysis ?? (mode === 'own' ? ownAnalysis! : sampleAnalysis)
   const scene = useMemo(() => buildScene(analysis, taxonomy), [analysis])
+
+  // On opening the page: bring back whatever was saved last time.
+  useEffect(() => {
+    let cancelled = false
+    loadSaved()
+      .then((saved) => {
+        if (cancelled || !saved) return
+        const base =
+          saved.claudeAnalysis ??
+          analyseWithDictionary({ label: 'Your postings and resume', fictional: false, ...saved.draft }, taxonomy)
+        setOwn({ draft: saved.draft, method: saved.method, base, build: 1 })
+        setLearned(saved.learned)
+        setSnapshots(saved.snapshots)
+      })
+      .catch(() => setSaveProblem(SAVE_FAILED))
+      .finally(() => {
+        if (!cancelled) setLoaded(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Save after every change. Waits for the load above, so an empty start
+  // never overwrites what was saved.
+  useEffect(() => {
+    if (!loaded || !own) return
+    const state: SavedState = {
+      version: SAVED_VERSION,
+      draft: own.draft,
+      method: own.method,
+      claudeAnalysis: own.method === 'claude' ? own.base : null,
+      learned,
+      snapshots,
+    }
+    writeSaved(state)
+      .then(() => setSaveProblem(null))
+      .catch(() => setSaveProblem(SAVE_FAILED))
+  }, [loaded, own, learned, snapshots])
+
+  // Pasting a different share link into the same tab changes only the "#" part,
+  // which does not reload the page by itself.
+  useEffect(() => {
+    const onHash = () => window.location.reload()
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
 
   // Escape closes the detail view from anywhere on the page.
   useEffect(() => {
@@ -73,7 +164,8 @@ function SkillMapApp() {
   const build = async (draft: Draft, method: Method) => {
     const inputs = { label: 'Your postings and resume', fictional: false, ...draft }
     const show = (result: Analysis) => {
-      setOwn((previous) => ({ draft, analysis: result, build: (previous?.build ?? 0) + 1 }))
+      setOwn((previous) => ({ draft, method, base: result, build: (previous?.build ?? 0) + 1 }))
+      setShowingSample(false)
       setSelectedId(null)
       setEditing(false)
     }
@@ -99,10 +191,73 @@ function SkillMapApp() {
     }
   }
 
-  const showSample = () => {
-    setOwn(null)
+  const toggleSample = () => {
+    setShowingSample((showing) => !showing)
     setSelectedId(null)
   }
+
+  /** Leaves a shared map for the person's own one, clearing the link from the address bar. */
+  const leaveShared = () => {
+    window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    setShared(null)
+    setSelectedId(null)
+  }
+
+  const learn = (id: string, url: string) =>
+    setLearned((marks) => ({ ...marks, [id]: { url, at: new Date().toISOString() } }))
+  const unlearn = (id: string) =>
+    setLearned((marks) => Object.fromEntries(Object.entries(marks).filter(([key]) => key !== id)))
+
+  const saveSnapshot = () =>
+    setSnapshots((list) => [...list, snapshotOf(analysis, new Date().toISOString())].slice(-MAX_SNAPSHOTS))
+  const deleteSnapshot = (index: number) => setSnapshots((list) => list.filter((_, i) => i !== index))
+
+  /** Hands the person a file with everything this app has saved about them. */
+  const exportData = () => {
+    if (!own) return
+    const data = { exported: new Date().toISOString(), draft: own.draft, method: own.method, learned, snapshots }
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'skill-map-data.json'
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const deleteAll = () => {
+    setOwn(null)
+    setLearned({})
+    setSnapshots([])
+    setSelectedId(null)
+    deleteSaved().catch(() => setSaveProblem(DELETE_FAILED))
+  }
+
+  if (shared === 'damaged') {
+    return (
+      <div className="app">
+        <header className="top">
+          <div className="top__title">
+            <h1>Skill Map</h1>
+          </div>
+        </header>
+        <main className="stage stage--single">
+          <div className="notice">
+            <h2>This share link could not be read</h2>
+            <p>
+              Part of it is missing or changed. Links often break when they are cut short by a message app. Ask for
+              it again, and copy the whole thing.
+            </p>
+            <button type="button" className="primary" onClick={leaveShared}>
+              Open Skill Map
+            </button>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  const shareUrl =
+    window.location.origin + window.location.pathname + SHARE_PREFIX + encodeShare(snapshotOf(analysis, ''))
 
   return (
     <div className="app">
@@ -130,6 +285,7 @@ function SkillMapApp() {
               </div>
             </dl>
             {analysis.fictional && <p className="badge">Fictional sample data</p>}
+            {mode === 'shared' && <p className="badge">Shared with you · read-only</p>}
             <div className="switch" role="group" aria-label="View">
               <button type="button" aria-pressed={view === 'map'} onClick={() => setView('map')}>
                 Map
@@ -139,14 +295,22 @@ function SkillMapApp() {
               </button>
             </div>
             <div className="top__actions">
-              {own && (
-                <button type="button" className="quiet" onClick={showSample}>
-                  Show the sample
+              {mode === 'shared' ? (
+                <button type="button" className="primary" onClick={leaveShared}>
+                  {own ? 'Back to my map' : 'Make my own map'}
                 </button>
+              ) : (
+                <>
+                  {own && (
+                    <button type="button" className="quiet" onClick={toggleSample}>
+                      {showingSample ? 'Back to my map' : 'Show the sample'}
+                    </button>
+                  )}
+                  <button type="button" className="primary" onClick={openEditor}>
+                    {own ? 'Edit my text' : 'Use my own postings'}
+                  </button>
+                </>
               )}
-              <button type="button" className="primary" onClick={openEditor}>
-                {own ? 'Edit my text' : 'Use my own postings'}
-              </button>
             </div>
           </>
         )}
@@ -163,12 +327,19 @@ function SkillMapApp() {
             onCancel={() => setEditing(false)}
           />
         </main>
+      ) : !loaded && mode === 'sample' ? (
+        // Looking for saved data takes a moment. Waiting avoids flashing the sample first.
+        <main className="stage stage--single">
+          <p className="muted" role="status">
+            Loading…
+          </p>
+        </main>
       ) : (
         <main className="stage">
           {view === 'map' ? (
             // The key makes a new map, with its opening animation, for each new analysis.
             <MapCanvas
-              key={own ? `own-${own.build}` : 'sample'}
+              key={mode === 'own' ? `own-${own!.build}` : mode}
               scene={scene}
               selectedId={selectedId}
               onSelect={setSelectedId}
@@ -183,6 +354,24 @@ function SkillMapApp() {
             selectedId={selectedId}
             onSelect={setSelectedId}
             onEdit={openEditor}
+            mode={mode}
+            onLearn={learn}
+            onUnlearn={unlearn}
+            extra={
+              mode === 'own' && (
+                <ProgressPanel
+                  taxonomy={taxonomy}
+                  current={snapshotOf(analysis, '')}
+                  snapshots={snapshots}
+                  onSaveSnapshot={saveSnapshot}
+                  onDeleteSnapshot={deleteSnapshot}
+                  shareUrl={shareUrl}
+                  onExport={exportData}
+                  onDeleteAll={deleteAll}
+                  saveProblem={saveProblem}
+                />
+              )
+            }
           />
         </main>
       )}

@@ -869,3 +869,132 @@ button {
   border-left: 2px solid var(--line);
   color: var(--muted);
 }
+
+/* ---------- progress, sharing and saved data (side panel) ---------- */
+
+.panel a {
+  color: var(--next);
+  overflow-wrap: anywhere;
+}
+
+.panel input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  padding: 8px 10px;
+}
+
+.panel input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.learn,
+.learn form {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.learn form {
+  width: 100%;
+}
+
+.learn label {
+  font-weight: 600;
+}
+
+.learn__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.panel section > button {
+  justify-self: start;
+}
+
+.field-error {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.snapshots {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+}
+
+.snapshots li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.snapshots__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.link {
+  background: none;
+  border: 0;
+  color: var(--next);
+  font-size: 13px;
+  padding: 2px 0;
+  text-decoration: underline;
+}
+
+.changes {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--raised);
+  border-radius: 8px;
+}
+
+.changes ul {
+  display: grid;
+  gap: 4px;
+  padding-left: 18px;
+}
+
+.share__link {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.confirm {
+  display: grid;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+}
+
+.danger {
+  background: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  color: var(--bg);
+  font-size: 13px;
+  font-weight: 650;
+  padding: 6px 12px;
+}
+
+.notice {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  max-width: 520px;
+  margin: 48px auto;
+  padding: 0 20px;
+}

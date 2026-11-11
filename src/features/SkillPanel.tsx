@@ -1,6 +1,7 @@
 import { demandScore, PREFERRED_WEIGHT, REQUIRED_WEIGHT } from '../domain/score.ts'
-import type { Analysis, Quote, Taxonomy } from '../domain/types.ts'
+import type { Analysis, Quote, SkillFinding, Taxonomy } from '../domain/types.ts'
 import type { Scene, SceneNode } from '../map/scene.ts'
+import { LearnBox } from './ProgressPanel.tsx'
 
 type Props = {
   analysis: Analysis
@@ -10,10 +11,23 @@ type Props = {
   onSelect: (id: string | null) => void
   /** Open the screen where postings and the resume are pasted. */
   onEdit: () => void
+  /**
+   * Whose map this is. "own" can be changed; the built-in "sample" and a
+   * "shared" link are read-only, and a shared map has no quotes.
+   */
+  mode: 'own' | 'sample' | 'shared'
+  /** Extra sections for the overview: progress, sharing and saved data. */
+  extra?: React.ReactNode
+  onLearn?: (id: string, url: string) => void
+  onUnlearn?: (id: string) => void
 }
 
-function statusOf(node: SceneNode): { label: string; kind: 'have' | 'gap' | 'stone' } {
-  if (node.have) return { label: 'On your resume', kind: 'have' }
+type Status = { label: string; kind: 'have' | 'gap' | 'stone' }
+
+function statusOf(node: SceneNode, finding?: SkillFinding, shared = false): Status {
+  if (finding?.learned) return { label: 'Learned, with proof', kind: 'have' }
+  // A shared map belongs to someone else, and says only that a skill is covered.
+  if (node.have) return { label: shared ? 'Covered' : 'On your resume', kind: 'have' }
   if (node.steppingStone) return { label: 'Stepping stone', kind: 'stone' }
   return { label: 'Gap', kind: 'gap' }
 }
@@ -28,8 +42,8 @@ function Swatch({ kind }: { kind: 'have' | 'gap' | 'next' | 'stone' }) {
   return <span className={`swatch swatch--${kind}`} aria-hidden="true" />
 }
 
-function SkillChip({ node, onSelect }: { node: SceneNode; onSelect: (id: string) => void }) {
-  const status = statusOf(node)
+function SkillChip({ node, onSelect, shared }: { node: SceneNode; onSelect: (id: string) => void; shared: boolean }) {
+  const status = statusOf(node, undefined, shared)
   return (
     <button type="button" className="chip" onClick={() => onSelect(node.id)}>
       <Swatch kind={node.next ? 'next' : status.kind} />
@@ -56,13 +70,13 @@ function Quotes({ title, quotes }: { title: string; quotes: Quote[] }) {
   )
 }
 
-function Legend() {
+function Legend({ shared }: { shared: boolean }) {
   return (
     <section>
       <h3>Reading the map</h3>
       <ul className="legend">
-        <li><Swatch kind="have" /> On your resume</li>
-        <li><Swatch kind="gap" /> Asked for, not on your resume</li>
+        <li><Swatch kind="have" /> {shared ? 'Covered' : 'On your resume, or marked as learned'}</li>
+        <li><Swatch kind="gap" /> {shared ? 'Asked for, not covered' : 'Asked for, not on your resume'}</li>
         <li><Swatch kind="next" /> Best to learn next</li>
         <li><Swatch kind="stone" /> Stepping stone toward a wanted skill</li>
       </ul>
@@ -108,7 +122,7 @@ function AboutResult({ analysis }: { analysis: Analysis }) {
   )
 }
 
-function Overview({ analysis, scene, onSelect, onEdit }: Omit<Props, 'selectedId' | 'taxonomy'>) {
+function Overview({ analysis, scene, onSelect, onEdit, mode, extra }: Omit<Props, 'selectedId' | 'taxonomy'>) {
   const next = analysis.next.map((id) => scene.byId.get(id)).filter((n) => n !== undefined)
   const asked = scene.nodes.filter((n) => n.demand > 0)
 
@@ -122,9 +136,12 @@ function Overview({ analysis, scene, onSelect, onEdit }: Omit<Props, 'selectedId
             ? 'There are no postings to read yet.'
             : 'None of the skills this tool knows were named in those postings. It covers software, data and AI roles, and it only spots skills that are named outright.'}
         </p>
-        <button type="button" className="primary" onClick={onEdit}>
-          Edit the postings
-        </button>
+        {mode !== 'shared' && (
+          <button type="button" className="primary" onClick={onEdit}>
+            Edit the postings
+          </button>
+        )}
+        {extra}
       </section>
     )
   }
@@ -160,20 +177,46 @@ function Overview({ analysis, scene, onSelect, onEdit }: Omit<Props, 'selectedId
             </ol>
           </>
         ) : (
-          <p>Your resume already shows every skill these postings name.</p>
+          <p>
+            {mode === 'shared'
+              ? 'Every skill these postings name is covered.'
+              : 'You already have every skill these postings name.'}
+          </p>
         )}
       </section>
-      <Legend />
-      <AboutResult analysis={analysis} />
+      <Legend shared={mode === 'shared'} />
+      {extra}
+      {mode === 'shared' ? (
+        <section>
+          <h3>About this map</h3>
+          <p className="muted">
+            Someone shared this with you. A shared map holds skills and counts only, so there are no quotes to
+            show, and you cannot change it.
+          </p>
+        </section>
+      ) : (
+        <AboutResult analysis={analysis} />
+      )}
     </>
   )
 }
 
-function Detail({ analysis, scene, taxonomy, node, onSelect }: Omit<Props, 'selectedId' | 'onEdit'> & { node: SceneNode }) {
+function Detail({
+  analysis,
+  scene,
+  taxonomy,
+  node,
+  onSelect,
+  mode,
+  onLearn,
+  onUnlearn,
+}: Omit<Props, 'selectedId' | 'onEdit' | 'extra'> & { node: SceneNode }) {
   const finding = analysis.findings.find((f) => f.id === node.id)
   const skill = taxonomy.byId.get(node.id)
   const category = taxonomy.categories.find((c) => c.id === node.cat)?.name ?? node.cat
-  const status = statusOf(node)
+  const status = statusOf(node, finding, mode === 'shared')
+  // Only your own map can be changed, and only a skill the resume does not already name.
+  const canLearn = mode === 'own' && onLearn && onUnlearn && (finding?.learned || !node.have || finding?.impliedBy)
   const buildsOn = (skill?.pre ?? []).map((id) => scene.byId.get(id)).filter((n) => n !== undefined)
   const leadsTo = scene.edges
     .filter((e) => e.from === node.id)
@@ -202,7 +245,8 @@ function Detail({ analysis, scene, taxonomy, node, onSelect }: Omit<Props, 'sele
 
       {finding?.impliedBy && (
         <p>
-          Your resume does not name this, but it shows {listOf(finding.impliedBy)}, which{' '}
+          {mode === 'shared' ? 'This is not named, but the map shows' : 'Your resume does not name this, but you have'}{' '}
+          {listOf(finding.impliedBy)}, which{' '}
           {finding.impliedBy.length === 1 ? 'builds' : 'build'} on it.
         </p>
       )}
@@ -227,8 +271,19 @@ function Detail({ analysis, scene, taxonomy, node, onSelect }: Omit<Props, 'sele
 
       {position >= 0 && (
         <p className="muted">
-          Step {position + 1} of {analysis.learningOrder.length} in your learning order.
+          Step {position + 1} of {analysis.learningOrder.length} in {mode === 'shared' ? 'the' : 'your'} learning order.
         </p>
+      )}
+
+      {canLearn && (
+        // The key gives each skill its own form, so half-typed text never carries over.
+        <LearnBox
+          key={node.id}
+          skillName={node.name}
+          proof={finding?.learned}
+          onLearn={(url) => onLearn(node.id, url)}
+          onUnlearn={() => onUnlearn(node.id)}
+        />
       )}
 
       <Quotes title="From the postings" quotes={finding?.postingQuotes ?? []} />
@@ -238,7 +293,7 @@ function Detail({ analysis, scene, taxonomy, node, onSelect }: Omit<Props, 'sele
         <section>
           <h3>Builds on</h3>
           <div className="chips">
-            {buildsOn.map((n) => <SkillChip key={n.id} node={n} onSelect={onSelect} />)}
+            {buildsOn.map((n) => <SkillChip key={n.id} node={n} onSelect={onSelect} shared={mode === 'shared'} />)}
           </div>
         </section>
       )}
@@ -246,7 +301,7 @@ function Detail({ analysis, scene, taxonomy, node, onSelect }: Omit<Props, 'sele
         <section>
           <h3>Leads to</h3>
           <div className="chips">
-            {leadsTo.map((n) => <SkillChip key={n.id} node={n} onSelect={onSelect} />)}
+            {leadsTo.map((n) => <SkillChip key={n.id} node={n} onSelect={onSelect} shared={mode === 'shared'} />)}
           </div>
         </section>
       )}

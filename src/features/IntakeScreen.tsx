@@ -55,8 +55,8 @@ export function IntakeScreen({ initial, claudeAvailable, progress, serverError, 
         <p className="muted">
           Paste a few postings for jobs you want, then your resume.{' '}
           {chosen === 'dictionary'
-            ? 'Your text stays in this browser: nothing is uploaded or saved.'
-            : 'With Claude, your text is sent to Anthropic to be read. It is not saved by this app.'}
+            ? 'Your text is saved in this browser only, so it is still here next time. Nothing is uploaded, and you can delete it from the map screen.'
+            : 'With Claude, your text is sent to Anthropic to be read. The result is saved in this browser only.'}
         </p>
       </div>
 

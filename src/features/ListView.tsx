@@ -50,7 +50,19 @@ export function ListView({ analysis, taxonomy, selectedId, onSelect }: Props) {
   // Have: most asked-for first.
   const have = analysis.findings
     .filter((f) => f.have)
-    .map((f) => row(f.id, f.impliedBy ? `Implied by ${f.impliedBy.join(', ')}` : 'Named on your resume'))
+    .map((f) =>
+      row(
+        f.id,
+        f.learned
+          ? 'Marked as learned'
+          : f.impliedBy
+            ? `Implied by ${f.impliedBy.join(', ')}`
+            : // A shared map has no quotes, so all it can say is that the skill is covered.
+              f.resumeQuotes.length > 0
+              ? 'Named on your resume'
+              : 'Covered',
+      ),
+    )
     .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
 
   if (toLearn.length === 0 && have.length === 0) {
@@ -102,7 +114,7 @@ export function ListView({ analysis, taxonomy, selectedId, onSelect }: Props) {
         preferred × 0.5. Choose a skill to see its quotes.
       </p>
       {toLearn.length > 0 && table(`To learn, in order (${toLearn.length})`, toLearn, true, 'Kind')}
-      {have.length > 0 && table(`Already shown (${have.length})`, have, false, 'How we know')}
+      {have.length > 0 && table(`Already covered (${have.length})`, have, false, 'How we know')}
     </div>
   )
 }
