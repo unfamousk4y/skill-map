@@ -1,0 +1,30 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "low",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "llm-apis",
+      "quote": "You have built features on top of hosted large language models by calling their APIs.",
+      "level": "required"
+    },
+    {
+      "skillId": "prompt-engineering",
+      "quote": "You know how to write and iterate on instructions for a model until the output is reliable.",
+      "level": "required"
+    },
+    {
+      "skillId": "rag",
+      "quote": "You have built a system that looks up relevant documents and feeds them to a model before it answers.",
+      "level": "required"
+    },
+    {
+      "skillId": "model-evaluation",
+      "quote": "You measure output quality with a fixed test set, not by eyeballing.",
+      "level": "required"
+    }
+  ],
+  "otherSkills": [],
+  "cost": 0.00017591000000000001
+}

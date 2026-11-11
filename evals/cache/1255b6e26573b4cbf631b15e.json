@@ -1,0 +1,30 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "medium",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "database-design",
+      "quote": "You design tables, keys and relationships so that data stays consistent.",
+      "level": "required"
+    },
+    {
+      "skillId": "transactions",
+      "quote": "You make sure that either every step of a payment is saved or none of it is.",
+      "level": "required"
+    },
+    {
+      "skillId": "caching",
+      "quote": "You keep slow lookups fast by storing recent results in memory.",
+      "level": "required"
+    },
+    {
+      "skillId": "authentication",
+      "quote": "You verify who a user is before showing them their data.",
+      "level": "required"
+    }
+  ],
+  "otherSkills": [],
+  "cost": 0.00029141000000000003
+}

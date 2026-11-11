@@ -1,0 +1,25 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "medium",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "docker",
+      "quote": "You package services into containers and run them on a cluster orchestrator.",
+      "level": "required"
+    },
+    {
+      "skillId": "ci-cd",
+      "quote": "You automate builds and releases so that every merge is tested and shipped without manual steps.",
+      "level": "required"
+    },
+    {
+      "skillId": "linux",
+      "quote": "You are comfortable in a terminal on a Unix-like system.",
+      "level": "required"
+    }
+  ],
+  "otherSkills": [],
+  "cost": 0.00030721000000000004
+}

@@ -1,0 +1,78 @@
+{
+  "synthetic": {
+    "matcher": {
+      "postings": 30,
+      "correct": 111,
+      "missed": 30,
+      "extra": 11,
+      "precision": 0.9098360655737705,
+      "recall": 0.7872340425531915,
+      "f1": 0.844106463878327,
+      "levelAccuracy": 1,
+      "describedRecall": 0,
+      "perfectPostings": 13
+    },
+    "claude-low": {
+      "postings": 30,
+      "correct": 139,
+      "missed": 2,
+      "extra": 2,
+      "precision": 0.9858156028368794,
+      "recall": 0.9858156028368794,
+      "f1": 0.9858156028368794,
+      "levelAccuracy": 1,
+      "describedRecall": 0.9615384615384616,
+      "perfectPostings": 27
+    },
+    "claude-medium": {
+      "postings": 30,
+      "correct": 139,
+      "missed": 2,
+      "extra": 1,
+      "precision": 0.9928571428571429,
+      "recall": 0.9858156028368794,
+      "f1": 0.9893238434163701,
+      "levelAccuracy": 1,
+      "describedRecall": 0.9230769230769231,
+      "perfectPostings": 28
+    }
+  },
+  "real": {
+    "matcher": {
+      "postings": 13,
+      "correct": 62,
+      "missed": 2,
+      "extra": 23,
+      "precision": 0.7294117647058823,
+      "recall": 0.96875,
+      "f1": 0.832214765100671,
+      "levelAccuracy": 0.9193548387096774,
+      "describedRecall": null,
+      "perfectPostings": 4
+    },
+    "claude-low": {
+      "postings": 13,
+      "correct": 64,
+      "missed": 0,
+      "extra": 48,
+      "precision": 0.5714285714285714,
+      "recall": 1,
+      "f1": 0.7272727272727273,
+      "levelAccuracy": 0.984375,
+      "describedRecall": null,
+      "perfectPostings": 2
+    },
+    "claude-medium": {
+      "postings": 13,
+      "correct": 64,
+      "missed": 0,
+      "extra": 36,
+      "precision": 0.64,
+      "recall": 1,
+      "f1": 0.7804878048780487,
+      "levelAccuracy": 0.984375,
+      "describedRecall": null,
+      "perfectPostings": 1
+    }
+  }
+}

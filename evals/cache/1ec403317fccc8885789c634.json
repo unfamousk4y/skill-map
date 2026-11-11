@@ -1,0 +1,30 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "medium",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "tdd",
+      "quote": "You write tests before you write the code that makes them pass.",
+      "level": "required"
+    },
+    {
+      "skillId": "code-review",
+      "quote": "You review teammates' changes and welcome review of your own.",
+      "level": "required"
+    },
+    {
+      "skillId": "debugging",
+      "quote": "You can find the cause of a failure in an unfamiliar codebase.",
+      "level": "required"
+    },
+    {
+      "skillId": "git",
+      "quote": "You track your work in version control with small, well-described commits.",
+      "level": "required"
+    }
+  ],
+  "otherSkills": [],
+  "cost": 0.00024941000000000004
+}

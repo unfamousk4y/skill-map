@@ -61,7 +61,10 @@ export async function handleExtract(request: Request, deps: Deps): Promise<Respo
   } catch {
     return fail(400, 'bad_request', 'The request was not valid JSON.')
   }
-  const { kind, text } = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>
+  const { kind, text, effort: asked } = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>
+  // How hard the model should think. The app always uses the default, "low".
+  // The accuracy test asks for "medium" too, to see whether it is worth the extra cost.
+  const effort = asked === 'medium' || asked === 'high' ? asked : 'low'
   if (kind !== 'posting' && kind !== 'resume') return fail(400, 'bad_request', 'kind must be "posting" or "resume".')
   if (typeof text !== 'string' || text.trim() === '') return fail(400, 'bad_request', 'text must not be empty.')
   if (text.length > MAX_CHARS) return fail(413, 'too_long', `text must be at most ${MAX_CHARS} characters.`)
@@ -80,8 +83,7 @@ export async function handleExtract(request: Request, deps: Deps): Promise<Respo
       // cache_control lets the API reuse these instructions on later calls at a tenth of the price.
       system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }],
       output_config: {
-        // "low" is the cheapest and fastest setting. Milestone 5 measures whether a higher one earns its cost.
-        effort: 'low',
+        effort,
         format: { type: 'json_schema', schema: SCHEMA },
       },
       messages: [{ role: 'user', content: buildUserMessage(kind, text) }],

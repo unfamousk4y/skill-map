@@ -1,0 +1,55 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "medium",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "python",
+      "quote": "Python, NumPy and PyTorch",
+      "level": "required"
+    },
+    {
+      "skillId": "numpy",
+      "quote": "Python, NumPy and PyTorch",
+      "level": "required"
+    },
+    {
+      "skillId": "pytorch",
+      "quote": "Python, NumPy and PyTorch",
+      "level": "required"
+    },
+    {
+      "skillId": "machine-learning",
+      "quote": "Solid understanding of machine learning and deep learning",
+      "level": "required"
+    },
+    {
+      "skillId": "deep-learning",
+      "quote": "Solid understanding of machine learning and deep learning",
+      "level": "required"
+    },
+    {
+      "skillId": "linear-algebra",
+      "quote": "Linear algebra and statistics",
+      "level": "required"
+    },
+    {
+      "skillId": "statistics",
+      "quote": "Linear algebra and statistics",
+      "level": "required"
+    },
+    {
+      "skillId": "transformers",
+      "quote": "Experience with Hugging Face transformers",
+      "level": "preferred"
+    },
+    {
+      "skillId": "gpu-computing",
+      "quote": "CUDA",
+      "level": "preferred"
+    }
+  ],
+  "otherSkills": [],
+  "cost": 0.00039811
+}

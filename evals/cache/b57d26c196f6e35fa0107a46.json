@@ -1,0 +1,58 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "medium",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "linux",
+      "quote": "Linux and Bash",
+      "level": "required"
+    },
+    {
+      "skillId": "bash",
+      "quote": "Linux and Bash",
+      "level": "required"
+    },
+    {
+      "skillId": "docker",
+      "quote": "Docker and Kubernetes",
+      "level": "required"
+    },
+    {
+      "skillId": "kubernetes",
+      "quote": "Docker and Kubernetes",
+      "level": "required"
+    },
+    {
+      "skillId": "terraform",
+      "quote": "Terraform",
+      "level": "required"
+    },
+    {
+      "skillId": "ci-cd",
+      "quote": "CI/CD with GitHub Actions",
+      "level": "required"
+    },
+    {
+      "skillId": "github-actions",
+      "quote": "CI/CD with GitHub Actions",
+      "level": "required"
+    },
+    {
+      "skillId": "aws",
+      "quote": "AWS",
+      "level": "required"
+    },
+    {
+      "skillId": "observability",
+      "quote": "Good to have: Prometheus and Grafana.",
+      "level": "preferred"
+    }
+  ],
+  "otherSkills": [
+    "Prometheus",
+    "Grafana"
+  ],
+  "cost": 0.00022731
+}

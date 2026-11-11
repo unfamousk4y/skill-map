@@ -1,0 +1,35 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "medium",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "r",
+      "quote": "R or Python for analysis",
+      "level": "required"
+    },
+    {
+      "skillId": "python",
+      "quote": "R or Python for analysis",
+      "level": "required"
+    },
+    {
+      "skillId": "sql",
+      "quote": "SQL",
+      "level": "required"
+    },
+    {
+      "skillId": "go",
+      "quote": "Go is a bonus",
+      "level": "preferred"
+    },
+    {
+      "skillId": "excel",
+      "quote": "Strong Excel skills",
+      "level": "required"
+    }
+  ],
+  "otherSkills": [],
+  "cost": 0.00014421
+}

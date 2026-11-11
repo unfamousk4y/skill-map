@@ -1,0 +1,27 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "medium",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "java",
+      "quote": "Java with Spring",
+      "level": "required"
+    },
+    {
+      "skillId": "spring",
+      "quote": "Java with Spring",
+      "level": "required"
+    },
+    {
+      "skillId": "sql-server",
+      "quote": "Oracle or SQL Server",
+      "level": "required"
+    }
+  ],
+  "otherSkills": [
+    "Oracle"
+  ],
+  "cost": 0.00026291000000000004
+}

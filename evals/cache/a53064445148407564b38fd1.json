@@ -1,0 +1,15 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "low",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "react",
+      "quote": "You react quickly to customer issues",
+      "level": "required"
+    }
+  ],
+  "otherSkills": [],
+  "cost": 0.00009111000000000001
+}

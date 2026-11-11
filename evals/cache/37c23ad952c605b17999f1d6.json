@@ -1,0 +1,30 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "medium",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "data-cleaning",
+      "quote": "You turn messy files and exports into tidy tables you can trust.",
+      "level": "required"
+    },
+    {
+      "skillId": "data-visualization",
+      "quote": "You explain what the numbers mean with clear charts.",
+      "level": "required"
+    },
+    {
+      "skillId": "data-analysis",
+      "quote": "You can summarise a dataset and say how confident you are in an estimate.",
+      "level": "required"
+    },
+    {
+      "skillId": "sql",
+      "quote": "You write database queries every day.",
+      "level": "required"
+    }
+  ],
+  "otherSkills": [],
+  "cost": 0.00026711000000000004
+}

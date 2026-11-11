@@ -1,0 +1,156 @@
+{
+  "name": "synthetic",
+  "note": "SYNTHETIC TEST DATA. Every company and posting here is invented. They were written by an AI model (Claude) to cover easy cases, skills that are described without being named, misleading words, and different ways of saying required or preferred. The answer key was drafted by the same model and must be hand-checked by a person: see REVIEW.md.",
+  "postings": [
+    {
+      "id": "s01", "group": "named",
+      "text": "Junior Web Developer, Pinecrest Studio\nRequirements:\n- HTML, CSS and JavaScript\n- Experience with React\n- Git\nNice to have:\n- TypeScript\n- Tailwind CSS",
+      "expected": { "required": ["html", "css", "javascript", "react", "git"], "preferred": ["typescript", "tailwind"] }
+    },
+    {
+      "id": "s02", "group": "named",
+      "text": "Backend Engineer Intern, Marlow Freight\nYou will build REST APIs in Java with Spring Boot, backed by PostgreSQL.\nRequired: Java, SQL, unit testing with JUnit.\nBonus: Kafka, Docker.",
+      "expected": { "required": ["rest-api", "java", "spring", "postgresql", "sql", "unit-testing", "junit"], "preferred": ["kafka", "docker"] }
+    },
+    {
+      "id": "s03", "group": "named",
+      "text": "Data Analyst Intern, Bellweather Retail\nMust have: SQL, Excel and Tableau.\nYou will build dashboards and run A/B tests.\nPreferred: Python with pandas.",
+      "expected": { "required": ["sql", "excel", "bi-tools", "data-visualization", "ab-testing"], "preferred": ["python", "pandas"] }
+    },
+    {
+      "id": "s04", "group": "named",
+      "text": "Machine Learning Intern, Quillon Labs\nRequirements:\n- Python, NumPy and PyTorch\n- Solid understanding of machine learning and deep learning\n- Linear algebra and statistics\nPreferred:\n- Experience with Hugging Face transformers\n- CUDA",
+      "expected": { "required": ["python", "numpy", "pytorch", "machine-learning", "deep-learning", "linear-algebra", "statistics"], "preferred": ["transformers", "gpu-computing"] }
+    },
+    {
+      "id": "s05", "group": "named",
+      "text": "DevOps Intern, Stonebridge Cloud\nWhat you need:\n- Linux and Bash\n- Docker and Kubernetes\n- Terraform\n- CI/CD with GitHub Actions\n- AWS\nGood to have: Prometheus and Grafana.",
+      "expected": { "required": ["linux", "bash", "docker", "kubernetes", "terraform", "ci-cd", "github-actions", "aws"], "preferred": ["observability"] }
+    },
+    {
+      "id": "s06", "group": "named",
+      "text": "Mobile Developer Intern, Tidewater Apps\nWe build with React Native and TypeScript.\nRequirements: React Native, TypeScript, REST APIs, Git.\nA plus: native iOS (Swift) or Android (Kotlin) experience.",
+      "expected": { "required": ["react-native", "typescript", "rest-api", "git"], "preferred": ["ios", "swift", "android", "kotlin"] }
+    },
+    {
+      "id": "s07", "group": "named",
+      "text": "Full-Stack Intern, Garnet Health\n- Next.js and React on the front end\n- Node.js with Express on the back end\n- MongoDB\n- Authentication with OAuth\n- Jest for testing",
+      "expected": { "required": ["nextjs", "react", "nodejs", "express", "mongodb", "authentication", "oauth", "jest"], "preferred": [] }
+    },
+    {
+      "id": "s08", "group": "named",
+      "text": "Data Engineer Intern, Halcyon Energy\nRequirements:\n- Python and SQL\n- ETL pipelines with Airflow\n- Spark\n- Snowflake or BigQuery\nNice to have:\n- dbt\n- Kafka",
+      "expected": { "required": ["python", "sql", "data-pipelines", "airflow", "spark", "data-warehousing"], "preferred": ["dbt", "kafka"] }
+    },
+    {
+      "id": "s09", "group": "described",
+      "text": "Platform Intern, Orchard Systems\n- You package services into containers and run them on a cluster orchestrator.\n- You automate builds and releases so that every merge is tested and shipped without manual steps.\n- You are comfortable in a terminal on a Unix-like system.",
+      "expected": { "required": ["docker", "kubernetes", "ci-cd", "linux"], "preferred": [], "described": ["kubernetes", "ci-cd"] }
+    },
+    {
+      "id": "s10", "group": "described",
+      "text": "Applied AI Intern, Fennel & Co\n- You have built features on top of hosted large language models by calling their APIs.\n- You know how to write and iterate on instructions for a model until the output is reliable.\n- You have built a system that looks up relevant documents and feeds them to a model before it answers.\n- You measure output quality with a fixed test set, not by eyeballing.",
+      "expected": { "required": ["llm-apis", "prompt-engineering", "rag", "model-evaluation"], "preferred": [], "described": ["prompt-engineering", "rag", "model-evaluation"] }
+    },
+    {
+      "id": "s11", "group": "described",
+      "text": "Software Intern, Brindle Robotics\n- You write tests before you write the code that makes them pass.\n- You review teammates' changes and welcome review of your own.\n- You can find the cause of a failure in an unfamiliar codebase.\n- You track your work in version control with small, well-described commits.",
+      "expected": { "required": ["tdd", "code-review", "debugging", "git"], "preferred": [], "described": ["tdd", "code-review", "debugging"] }
+    },
+    {
+      "id": "s12", "group": "described",
+      "text": "Backend Intern, Larkspur Pay\n- You design tables, keys and relationships so that data stays consistent.\n- You make sure that either every step of a payment is saved or none of it is.\n- You keep slow lookups fast by storing recent results in memory.\n- You verify who a user is before showing them their data.",
+      "expected": { "required": ["database-design", "transactions", "caching", "authentication"], "preferred": [], "described": ["database-design", "transactions", "caching", "authentication"] }
+    },
+    {
+      "id": "s13", "group": "described",
+      "text": "Frontend Intern, Meridian Arts\n- You build pages that work as well on a phone as on a wide monitor.\n- You make sure people using a screen reader or only a keyboard can use everything.\n- You care how fast a page loads and can measure it.",
+      "expected": { "required": ["responsive-design", "accessibility", "web-performance"], "preferred": [], "described": ["responsive-design", "accessibility", "web-performance"] }
+    },
+    {
+      "id": "s14", "group": "described",
+      "text": "ML Engineer Intern, Cobalt Vision\n- You have trained neural networks to recognise objects in images.\n- You have taken a model from an experiment to a service that other teams call.\n- You have adapted a pretrained model to a new task with a small labelled dataset.\n- Python is our main language.",
+      "expected": { "required": ["deep-learning", "computer-vision", "mlops", "fine-tuning", "python"], "preferred": [], "described": ["computer-vision", "mlops", "fine-tuning"] }
+    },
+    {
+      "id": "s15", "group": "described",
+      "text": "Data Intern, Wrenfield Insurance\n- You turn messy files and exports into tidy tables you can trust.\n- You explain what the numbers mean with clear charts.\n- You can summarise a dataset and say how confident you are in an estimate.\n- You write database queries every day.",
+      "expected": { "required": ["data-cleaning", "data-visualization", "statistics", "sql"], "preferred": [], "described": ["data-cleaning", "data-visualization", "statistics", "sql"] }
+    },
+    {
+      "id": "s16", "group": "described",
+      "text": "Systems Intern, Tarn Networks\n- You understand how processes, threads and memory are managed by a kernel.\n- You can write code where several things happen at once without corrupting shared state.\n- You know what happens between typing an address and a page arriving, packet by packet.\n- We write mostly in C and Rust.",
+      "expected": { "required": ["operating-systems", "concurrency", "networking", "c", "rust"], "preferred": [], "described": ["operating-systems", "concurrency", "networking"] }
+    },
+    {
+      "id": "s17", "group": "misleading",
+      "text": "Customer Success Associate, Go Bright Energy\nYou react quickly to customer issues, excel at written communication and express ideas clearly.\nYou will rest easy knowing our platform team handles the technical side.\nRequirements: empathy, organisation, a driving licence.",
+      "expected": { "required": [], "preferred": [] }
+    },
+    {
+      "id": "s18", "group": "misleading",
+      "text": "Backend Intern, Ashgrove Mobility\nAbout us: our platform runs on Kubernetes and Kafka and serves 2 million riders. Our data science team uses PyTorch.\nAbout the role: you will maintain internal billing scripts.\nRequirements:\n- Python\n- SQL",
+      "expected": { "required": ["python", "sql"], "preferred": [] }
+    },
+    {
+      "id": "s19", "group": "misleading",
+      "text": "Junior Developer, Thistle Software\nRequirements:\n- JavaScript and React\nYou do not need to know Docker or Kubernetes: our platform team handles deployment.\nNo prior TypeScript experience is required, we will teach you.",
+      "expected": { "required": ["javascript", "react"], "preferred": [] }
+    },
+    {
+      "id": "s20", "group": "misleading",
+      "text": "Analytics Intern, Kestrel Sports\nRequirements:\n- R or Python for analysis\n- SQL\n- Go is a bonus\n- Strong Excel skills",
+      "expected": { "required": ["r", "python", "sql", "excel"], "preferred": ["go"] }
+    },
+    {
+      "id": "s21", "group": "misleading",
+      "text": "Software Intern, Spring Street Bank\nJoin us in spring 2027 at our Spring Street office.\nRequirements:\n- Java with Spring\n- Oracle or SQL Server\n- Swift communication with stakeholders",
+      "expected": { "required": ["java", "spring", "sql-server"], "preferred": [] }
+    },
+    {
+      "id": "s22", "group": "misleading",
+      "text": "Research Engineer Intern, Lambda School of Design\nWe are an art school; the name has nothing to do with programming.\nRequirements:\n- Python\n- Experience building dashboards\n- Comfortable presenting to non-technical staff",
+      "expected": { "required": ["python", "data-visualization"], "preferred": [] }
+    },
+    {
+      "id": "s23", "group": "levels",
+      "text": "Software Engineer Intern, Pallas Aerospace\nMinimum qualifications:\n- C++\n- Data structures and algorithms\nPreferred qualifications:\n- Python\n- Experience with Linux\nWhat we offer:\n- Mentorship from engineers who use MATLAB daily",
+      "expected": { "required": ["cpp", "data-structures", "algorithms"], "preferred": ["python", "linux"] }
+    },
+    {
+      "id": "s24", "group": "levels",
+      "text": "Web Intern, Ostler Media\nWe would love it if you knew Vue, but it is not required.\nYou must be comfortable with HTML and CSS.\nIdeally you have used Figma and some JavaScript.",
+      "expected": { "required": ["html", "css"], "preferred": ["vue", "javascript"] }
+    },
+    {
+      "id": "s25", "group": "levels",
+      "text": "Cloud Intern, Nimbus Ledger\nRequired: one of AWS, Azure or Google Cloud.\nStrongly preferred: Terraform.\nOptional but welcome: Go, Kubernetes.",
+      "expected": { "required": ["aws", "azure", "gcp"], "preferred": ["terraform", "go", "kubernetes"] }
+    },
+    {
+      "id": "s26", "group": "levels",
+      "text": "QA Intern, Verity Games\nMust-haves\n- Writing automated tests\n- Playwright or Cypress\nNice-to-haves\n- Python\n- Experience with CI/CD",
+      "expected": { "required": ["unit-testing", "e2e-testing"], "preferred": ["python", "ci-cd"] }
+    },
+    {
+      "id": "s27", "group": "levels",
+      "text": "Software Intern, Calder Maps\n- Python (required)\n- PostgreSQL (required)\n- Redis (nice to have)\n- GraphQL (nice to have)\n- TypeScript (bonus)",
+      "expected": { "required": ["python", "postgresql"], "preferred": ["redis", "graphql", "typescript"] }
+    },
+    {
+      "id": "s28", "group": "nothing",
+      "text": "Barista, Juniper Coffee\nMake great coffee, keep the bar clean, be kind to customers.\nWeekend availability required.",
+      "expected": { "required": [], "preferred": [] }
+    },
+    {
+      "id": "s29", "group": "nothing",
+      "text": "Software Engineer Intern, Vantage\nWe are looking for curious people with strong technical skills and a passion for problem solving.\nAny programming language is fine.",
+      "expected": { "required": [], "preferred": [] }
+    },
+    {
+      "id": "s30", "group": "described",
+      "text": "Security Intern, Halberd Trust\nRequirements:\n- Understanding of common web vulnerabilities (OWASP Top 10)\n- TLS, hashing and encryption basics\n- Python or Bash scripting\nPreferred:\n- Experience reading other people's code to find flaws before it ships",
+      "expected": { "required": ["security", "cryptography", "python", "bash"], "preferred": ["code-review"], "described": ["code-review"] }
+    }
+  ]
+}

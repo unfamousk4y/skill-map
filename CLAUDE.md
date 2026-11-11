@@ -1,6 +1,6 @@
 # Skill Map (working title)
 
-Paste job postings and a resume, get an explorable skill tree: what you have, what is missing, what to learn next. Software, data and AI roles only. The approved build plan is in `docs/PLAN.md`.
+Paste job postings and a resume, get an explorable skill tree: what you have, what is missing, what to learn next. Software, data and AI roles only. The approved build plan is in `docs/PLAN.md`. **Resuming work? Read `docs/HANDOFF.md` first.**
 
 ## Commands
 
@@ -21,8 +21,10 @@ Update this section as milestones land.
 - **Milestone 1 (foundation and 3D map screen): done and committed.**
 - **Milestone 2 (the engine without AI): done and committed.** Pipeline: `matcher.ts` finds skills, `verify.ts` checks quotes, `score.ts` counts, `rank.ts` orders. `src/extract/dictionary.ts` runs them in sequence.
 - **Milestone 3 (keyboard use, list view, phone layout, speed test): done and committed.** Accepted by the owner on screen; Claude only checked it by reading the page and sending key presses.
-- **Milestone 4 (Claude extraction): built, not committed.** Real test on 2026-11-10 with `node evals/smoke.mjs`: 8 documents for $0.0032, no quotes dropped, hostile posting ignored. On the built-in sample Claude and the free matcher agree almost exactly, because the sample names every skill outright; milestone 5 needs postings that describe skills without naming them.
-- Milestones 5 to 7: not started.
+- **Milestone 4 (Claude extraction): done and committed.** Real test on 2026-11-10 with `node evals/smoke.mjs`: 8 documents for $0.0032, no quotes dropped, hostile posting ignored. On the built-in sample Claude and the free matcher agree almost exactly, because the sample names every skill outright; milestone 5 needs postings that describe skills without naming them.
+- **Milestone 5 (accuracy test): done and committed.** Two test sets, which disagree: 30 synthetic postings (matcher 91% precision / 79% recall, Claude 99% / 99%) and 13 real postings labelled by the owner (matcher 73% / 97%, Claude 57% / 100%). On real postings both extractors report extra skills, mostly from "Responsibilities" sections. The synthetic key has not been hand-checked. Nothing was tuned on either set: keep it that way. Full detail and limits in `evals/README.md`.
+- **Milestones 6 (progress and sharing) and 7 (ship): not started.** Read `docs/HANDOFF.md` first: it has the current state, the open questions for the owner, and what is next.
+- Total API spend so far: $0.0325 of the $3 limit.
 - Decision 2026-11-10: beta testers use the free matcher at no cost. Claude runs only on the owner's machine, for the demo video and the accuracy comparison. The deployed site is static files with no server, so it cannot spend API credit. There is no Cloudflare Function and `wrangler` is not installed (both were in the original plan).
 - Decision 2026-11-10: the server uses the official `@anthropic-ai/sdk` library, not plain `fetch` as the plan first said, following Anthropic's guidance. Read the Claude API reference first and give a cost estimate before any paid call.
 - Speed test: open `/?bench`. "Our code" numbers from Claude's hidden preview on 2026-11-10 (Chrome 152): 60 skills 4.7 ms, 200 skills 7.8 ms, 500 skills 16.0 ms, 1000 skills 26.7 ms per frame. The owner's visible browser on 2026-11-10: our code 0 to 1 ms at 60 skills, 1 to 2 ms at 200, 3 to 4 ms at 500, 5 to 6 ms at 1000 (that browser's clock ticks in whole milliseconds), and 6.1 ms between frames on screen at every size, which is a steady 165 frames per second on a 165 Hz screen.

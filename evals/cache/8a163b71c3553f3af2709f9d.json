@@ -1,0 +1,50 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "low",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "react-native",
+      "quote": "We build with React Native and TypeScript.",
+      "level": "required"
+    },
+    {
+      "skillId": "typescript",
+      "quote": "We build with React Native and TypeScript.",
+      "level": "required"
+    },
+    {
+      "skillId": "rest-api",
+      "quote": "Requirements: React Native, TypeScript, REST APIs, Git.",
+      "level": "required"
+    },
+    {
+      "skillId": "git",
+      "quote": "Requirements: React Native, TypeScript, REST APIs, Git.",
+      "level": "required"
+    },
+    {
+      "skillId": "swift",
+      "quote": "A plus: native iOS (Swift) or Android (Kotlin) experience.",
+      "level": "preferred"
+    },
+    {
+      "skillId": "kotlin",
+      "quote": "A plus: native iOS (Swift) or Android (Kotlin) experience.",
+      "level": "preferred"
+    },
+    {
+      "skillId": "ios",
+      "quote": "A plus: native iOS (Swift) or Android (Kotlin) experience.",
+      "level": "preferred"
+    },
+    {
+      "skillId": "android",
+      "quote": "A plus: native iOS (Swift) or Android (Kotlin) experience.",
+      "level": "preferred"
+    }
+  ],
+  "otherSkills": [],
+  "cost": 0.00025861
+}

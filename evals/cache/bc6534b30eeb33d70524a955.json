@@ -1,0 +1,38 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "medium",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "security",
+      "quote": "Understanding of common web vulnerabilities (OWASP Top 10)",
+      "level": "required"
+    },
+    {
+      "skillId": "cryptography",
+      "quote": "TLS, hashing and encryption basics",
+      "level": "required"
+    },
+    {
+      "skillId": "python",
+      "quote": "Python or Bash scripting",
+      "level": "required"
+    },
+    {
+      "skillId": "bash",
+      "quote": "Python or Bash scripting",
+      "level": "required"
+    },
+    {
+      "skillId": "code-review",
+      "quote": "Experience reading other people's code to find flaws before it ships",
+      "level": "preferred"
+    }
+  ],
+  "otherSkills": [
+    "TLS",
+    "hashing"
+  ],
+  "cost": 0.00037731
+}

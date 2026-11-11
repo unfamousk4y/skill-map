@@ -1,0 +1,30 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "low",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "e2e-testing",
+      "quote": "- Playwright or Cypress",
+      "level": "required"
+    },
+    {
+      "skillId": "unit-testing",
+      "quote": "- Writing automated tests",
+      "level": "required"
+    },
+    {
+      "skillId": "python",
+      "quote": "- Python",
+      "level": "preferred"
+    },
+    {
+      "skillId": "ci-cd",
+      "quote": "- Experience with CI/CD",
+      "level": "preferred"
+    }
+  ],
+  "otherSkills": [],
+  "cost": 0.00013921000000000002
+}

@@ -1,0 +1,55 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "low",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "rest-api",
+      "quote": "You will build REST APIs in Java with Spring Boot, backed by PostgreSQL.",
+      "level": "required"
+    },
+    {
+      "skillId": "java",
+      "quote": "You will build REST APIs in Java with Spring Boot, backed by PostgreSQL.",
+      "level": "required"
+    },
+    {
+      "skillId": "spring",
+      "quote": "You will build REST APIs in Java with Spring Boot, backed by PostgreSQL.",
+      "level": "required"
+    },
+    {
+      "skillId": "postgresql",
+      "quote": "You will build REST APIs in Java with Spring Boot, backed by PostgreSQL.",
+      "level": "required"
+    },
+    {
+      "skillId": "sql",
+      "quote": "Required: Java, SQL, unit testing with JUnit.",
+      "level": "required"
+    },
+    {
+      "skillId": "unit-testing",
+      "quote": "Required: Java, SQL, unit testing with JUnit.",
+      "level": "required"
+    },
+    {
+      "skillId": "junit",
+      "quote": "Required: Java, SQL, unit testing with JUnit.",
+      "level": "required"
+    },
+    {
+      "skillId": "kafka",
+      "quote": "Bonus: Kafka, Docker.",
+      "level": "preferred"
+    },
+    {
+      "skillId": "docker",
+      "quote": "Bonus: Kafka, Docker.",
+      "level": "preferred"
+    }
+  ],
+  "otherSkills": [],
+  "cost": 0.00028411
+}

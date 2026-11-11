@@ -1,0 +1,9 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "medium",
+  "status": "ok",
+  "mentions": [],
+  "otherSkills": [],
+  "cost": 0.00007211000000000001
+}

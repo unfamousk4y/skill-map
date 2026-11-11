@@ -1,0 +1,32 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "medium",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "html",
+      "quote": "You must be comfortable with HTML and CSS.",
+      "level": "required"
+    },
+    {
+      "skillId": "css",
+      "quote": "You must be comfortable with HTML and CSS.",
+      "level": "required"
+    },
+    {
+      "skillId": "vue",
+      "quote": "We would love it if you knew Vue, but it is not required.",
+      "level": "preferred"
+    },
+    {
+      "skillId": "javascript",
+      "quote": "Ideally you have used Figma and some JavaScript.",
+      "level": "preferred"
+    }
+  ],
+  "otherSkills": [
+    "Figma"
+  ],
+  "cost": 0.00015531
+}

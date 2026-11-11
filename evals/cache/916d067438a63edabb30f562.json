@@ -1,0 +1,50 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "low",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "python",
+      "quote": "Python and SQL",
+      "level": "required"
+    },
+    {
+      "skillId": "sql",
+      "quote": "Python and SQL",
+      "level": "required"
+    },
+    {
+      "skillId": "data-pipelines",
+      "quote": "ETL pipelines with Airflow",
+      "level": "required"
+    },
+    {
+      "skillId": "airflow",
+      "quote": "ETL pipelines with Airflow",
+      "level": "required"
+    },
+    {
+      "skillId": "spark",
+      "quote": "Spark",
+      "level": "required"
+    },
+    {
+      "skillId": "data-warehousing",
+      "quote": "Snowflake or BigQuery",
+      "level": "required"
+    },
+    {
+      "skillId": "dbt",
+      "quote": "dbt",
+      "level": "preferred"
+    },
+    {
+      "skillId": "kafka",
+      "quote": "Kafka",
+      "level": "preferred"
+    }
+  ],
+  "otherSkills": [],
+  "cost": 0.00019881
+}

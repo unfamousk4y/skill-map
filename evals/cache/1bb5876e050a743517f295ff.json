@@ -1,0 +1,35 @@
+{
+  "model": "claude-haiku-5-5",
+  "promptVersion": "fc22de2f0248",
+  "effort": "medium",
+  "status": "ok",
+  "mentions": [
+    {
+      "skillId": "python",
+      "quote": "- Python (required)",
+      "level": "required"
+    },
+    {
+      "skillId": "postgresql",
+      "quote": "- PostgreSQL (required)",
+      "level": "required"
+    },
+    {
+      "skillId": "redis",
+      "quote": "- Redis (nice to have)",
+      "level": "preferred"
+    },
+    {
+      "skillId": "graphql",
+      "quote": "- GraphQL (nice to have)",
+      "level": "preferred"
+    },
+    {
+      "skillId": "typescript",
+      "quote": "- TypeScript (bonus)",
+      "level": "preferred"
+    }
+  ],
+  "otherSkills": [],
+  "cost": 0.00015831
+}
