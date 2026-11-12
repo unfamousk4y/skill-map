@@ -4,7 +4,7 @@ Paste a few job postings and your resume. Skill Map draws an explorable 3D map o
 
 It covers software, data and AI roles. It runs entirely in your browser: nothing you paste is uploaded.
 
-**Live demo:** not deployed yet.
+**Live demo:** https://skill-map-54l.pages.dev
 
 ## Why it is different from asking a chatbot
 

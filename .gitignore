@@ -15,3 +15,6 @@ evals/private/
 # The spend log holds token counts and costs only, no document text. It is
 # kept out of git because it is a record of one machine's API usage.
 evals/spend-log.jsonl
+
+# Personal study notes for interviews. Kept on this machine only.
+docs/STUDY_GUIDE.md
