@@ -1,6 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "skill-map", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 5183 }
+    { "name": "skill-map", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 5183 },
+    { "name": "skill-map-built", "runtimeExecutable": "node", "runtimeArgs": ["server/serveDist.mjs"], "port": 5184 }
   ]
 }

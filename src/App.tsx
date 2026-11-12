@@ -31,6 +31,8 @@ export function App() {
  * answer is simply "no".
  */
 async function claudeIsAvailable(): Promise<boolean> {
+  // The published site is static files with no server, so it does not even ask.
+  if (!import.meta.env.DEV) return false
   try {
     const status = (await (await fetch('/api/status')).json()) as { claude?: unknown }
     return status.claude === true
