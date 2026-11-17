@@ -136,6 +136,6 @@ Security notes: the published site sends a Content-Security-Policy that limits s
 
 ## How it was built
 
-Built in under a week in November 2026 with Claude Code (Claude Fable 5.2) writing the code under my direction. I set the product, the constraints and the scope, chose between the options at each decision, reviewed each milestone against the running app, labelled the real test postings and checked the answer key. The plan we worked from is in [docs/PLAN.md](docs/PLAN.md).
+Built in under a week in November 2026 with Claude Code (Claude Fable 5.2) writing the code under my direction. I set the product, the constraints and the scope, chose between the options at each decision, reviewed each milestone against the running app, labelled the real test postings and checked the answer key.
 
 All sample data in the app is fictional and says so on screen.

@@ -16,5 +16,6 @@ evals/private/
 # kept out of git because it is a record of one machine's API usage.
 evals/spend-log.jsonl
 
-# Personal study notes for interviews. Kept on this machine only.
-docs/STUDY_GUIDE.md
+# Working notes: the plan, handoff notes, demo script, resume entry and study
+# guide. Kept on this machine only, not published.
+docs/
